@@ -120,10 +120,8 @@ class ShipItem(SFItem.SFBrowserItem):
             self.animTimer.Stop()
         self.Refresh()
 
-    def OnKeyUp(self, event):
-        if event.GetKeyCode() in (32, 13):  # space and enter
-            self.selectShip(event)
-        event.Skip()
+    def Activate(self):
+        self.selectShip()
 
     @staticmethod
     def OUT_QUAD(t, b, c, d):
@@ -139,7 +137,7 @@ class ShipItem(SFItem.SFBrowserItem):
     def GetType(self):
         return 2
 
-    def selectShip(self, event):
+    def selectShip(self):
         if self.tcFitName.IsShown():
             self.tcFitName.Show(False)
             self.newBtn.SetBitmap(self.newBmp)
@@ -152,7 +150,7 @@ class ShipItem(SFItem.SFBrowserItem):
                 self.newBtnCB()
 
     def MouseLeftUp(self, event):
-        self.selectShip(event)
+        self.selectShip()
 
     def newBtnCB(self):
         if self.tcFitName.IsShown():

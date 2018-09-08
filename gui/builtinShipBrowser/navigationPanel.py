@@ -4,6 +4,7 @@ import wx
 from logbook import Logger
 
 import gui.builtinShipBrowser.sfBrowserItem as SFItem
+from gui.builtinShipBrowser.pfWidgetContainer import PFWidgetsContainer
 import gui.mainFrame
 import gui.utils.color as colorUtils
 import gui.utils.draw as drawUtils
@@ -72,7 +73,7 @@ class NavigationPanel(SFItem.SFBrowserItem):
 
         # self.BrowserSearchBox.Bind(wx.EVT_TEXT_ENTER, self.OnBrowserSearchBoxEnter)
         # self.BrowserSearchBox.Bind(wx.EVT_KILL_FOCUS, self.OnBrowserSearchBoxLostFocus)
-        self.BrowserSearchBox.Bind(wx.EVT_KEY_DOWN, self.OnBrowserSearchBoxEsc)
+        self.BrowserSearchBox.Bind(wx.EVT_KEY_DOWN, self.OnBrowserSearchBoxKeyDown)
         self.BrowserSearchBox.Bind(wx.EVT_TEXT, self.OnScheduleSearch)
 
         self.SetMinSize(size)
@@ -103,9 +104,19 @@ class NavigationPanel(SFItem.SFBrowserItem):
     def OnBrowserSearchBoxLostFocus(self, event):
         self.BrowserSearchBox.Show(False)
 
-    def OnBrowserSearchBoxEsc(self, event):
-        if event.GetKeyCode() == wx.WXK_ESCAPE:
+    def OnBrowserSearchBoxKeyDown(self, event):
+        pane: PFWidgetsContainer = self.shipBrowser.lpane
+        keyCode = event.GetKeyCode()
+        if keyCode == wx.WXK_ESCAPE:
             self.BrowserSearchBox.Show(False)
+        elif keyCode == wx.WXK_DOWN:
+            pane.HighlightWidgetAt(min(pane.GetHighlightedWidgetIndex() + 1, len(pane.GetWidgetList()) - 1))
+        elif keyCode == wx.WXK_UP:
+            pane.HighlightWidgetAt(max(pane.GetHighlightedWidgetIndex() - 1, 0))
+        elif keyCode == wx.WXK_RETURN:
+            current = pane.GetHighlightedWidget()
+            if current:
+                current.Activate()
         else:
             event.Skip()
 

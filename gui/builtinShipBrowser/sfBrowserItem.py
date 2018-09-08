@@ -1,6 +1,8 @@
 # noinspection PyPackageRequirements
 import wx
 import gui.utils.draw as drawUtils
+from gui.builtinShipBrowser.pfListPane import PFListPane
+
 
 SB_ITEM_NORMAL = 0
 SB_ITEM_SELECTED = 1
@@ -265,6 +267,9 @@ class SFBrowserItem(wx.Window):
         self.Bind(wx.EVT_SET_FOCUS, self.OnFocus)
         self.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
 
+    def Activate(self):
+        pass
+
     def OnFocus(self, evt):
         self.SetHighlighted(True)
         self.Refresh()
@@ -296,7 +301,9 @@ class SFBrowserItem(wx.Window):
         pass
 
     def OnKeyUp(self, event):
-        pass
+        if event.GetKeyCode() in (wx.WXK_SPACE, wx.WXK_RETURN):
+            self.Activate()
+        event.Skip()
 
     def MouseLeftUp(self, event):
         pass
@@ -352,7 +359,10 @@ class SFBrowserItem(wx.Window):
         self.MouseLeftDown(event)
 
     def OnEnterWindow(self, event):
-        self.SetHighlighted(True)
+        if isinstance(self.GetParent(), PFListPane):
+            self.GetParent().HighlightWidget(self)
+        else:
+            self.SetHighlighted(True)
         self.toolbar.ClearState()
         self.Refresh()
         event.Skip()

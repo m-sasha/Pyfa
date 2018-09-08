@@ -161,10 +161,8 @@ class FitItem(SFItem.SFBrowserItem):
                 notes = '─' * 20 + "\nNotes: {}\n".format(self.notes[:197] + '...' if len(self.notes) > 200 else self.notes)
             self.SetToolTip(wx.ToolTip('{}\n{}{}\n{}'.format(self.shipName, notes, '─' * 20, self.shipTrait)))
 
-    def OnKeyUp(self, event):
-        if event.GetKeyCode() in (32, 13):  # space and enter
-            self.selectFit(event)
-        event.Skip()
+    def Activate(self):
+        self.selectFit()
 
     def OpenNewTab(self, evt):
         self.selectFit(newTab=True)
@@ -436,7 +434,7 @@ class FitItem(SFItem.SFBrowserItem):
                 self.dragWindow.SetPosition(pos)
             return
 
-    def selectFit(self, event=None, newTab=False):
+    def selectFit(self, newTab=False):
         if newTab:
             wx.PostEvent(self.mainFrame, FitSelected(fitID=self.fitID, startup=2))
         else:

@@ -122,6 +122,32 @@ class PFListPane(wx.ScrolledWindow):
     def IsWidgetSelectedByContext(self, widget):
         return False
 
+    def HighlightWidget(self, widget):
+        """ Makes the given widget highlighted, un-highlighting the current one, if any"""
+        for w in self._wList:
+            w.SetHighlighted(False)
+            w.Refresh()
+
+        if widget:
+            widget.SetHighlighted(True)
+            widget.Refresh()
+
+    def HighlightWidgetAt(self, index):
+        """ Makes the widget at the given index highlighted, un-highlighting the current one, if any"""
+        widget = self._wList[index] if index >= 0 else None
+        self.HighlightWidget(widget)
+
+    def GetHighlightedWidgetIndex(self):
+        """ Returns the index of the currently highlighted widget, -1 if none"""
+        try:
+            return next(i for i,v in enumerate(self._wList) if v.highlighted)
+        except StopIteration:
+            return -1
+
+    def GetHighlightedWidget(self):
+        index = self.GetHighlightedWidgetIndex()
+        return self._wList[index] if index >= 0 else None
+
     def RefreshList(self, doRefresh=False, doFocus=False):
         maxy = 0
 
