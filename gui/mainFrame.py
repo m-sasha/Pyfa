@@ -19,6 +19,8 @@
 
 import sys
 import os.path
+from typing import Optional, Any
+
 from logbook import Logger
 
 import sqlalchemy
@@ -64,6 +66,7 @@ from gui.utils.clipboard import toClipboard, fromClipboard
 from gui.updateDialog import UpdateDialog
 # noinspection PyUnresolvedReferences
 from gui.builtinViews import emptyView, entityEditor, fittingView, implantEditor  # noqa: F401
+from gui.utils.exportStats import statsExportText
 from gui import graphFrame
 
 from service.settings import SettingsProvider
@@ -71,6 +74,8 @@ from service.fit import Fit
 from service.character import Character
 from service.update import Update
 from service.esiAccess import SsoMode
+
+from eos.saveddata.fit import Fit as SavedFit
 
 # import this to access override setting
 from eos.modifiedAttributeDict import ModifiedAttributeDict
@@ -538,6 +543,7 @@ class MainFrame(wx.Frame):
 
         # Clipboard exports
         self.Bind(wx.EVT_MENU, self.exportToClipboard, id=wx.ID_COPY)
+        self.Bind(wx.EVT_MENU, self.exportFitStatsToClipboard, id=menuBar.fitStatsToClipboardId)
 
         # Fitting Restrictions
         self.Bind(wx.EVT_MENU, self.toggleIgnoreRestriction, id=menuBar.toggleIgnoreRestrictionID)
@@ -758,6 +764,13 @@ class MainFrame(wx.Frame):
             dlg.Destroy()
         except RuntimeError:
             pyfalog.error("Tried to destroy an object that doesn't exist in <exportToClipboard>.")
+
+
+    def exportFitStatsToClipboard(self, event):
+        """ Puts fit stats in textual format into the clipboard"""
+        fit = db_getFit(self.getActiveFit())
+        if fit:
+            toClipboard(statsExportText(fit))
 
     def exportSkillsNeeded(self, event):
         """ Exports skills needed for active fit and active character """
