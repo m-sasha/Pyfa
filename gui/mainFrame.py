@@ -75,8 +75,6 @@ from service.character import Character
 from service.update import Update
 from service.esiAccess import SsoMode
 
-from eos.saveddata.fit import Fit as SavedFit
-
 # import this to access override setting
 from eos.modifiedAttributeDict import ModifiedAttributeDict
 from eos.db.saveddata.loadDefaultDatabaseValues import DefaultDatabaseValues
@@ -764,7 +762,6 @@ class MainFrame(wx.Frame):
             dlg.Destroy()
         except RuntimeError:
             pyfalog.error("Tried to destroy an object that doesn't exist in <exportToClipboard>.")
-
 
     def exportFitStatsToClipboard(self, event):
         """ Puts fit stats in textual format into the clipboard"""

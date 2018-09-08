@@ -74,7 +74,7 @@ class DamagePattern(object):
     }
 
     @classmethod
-    def oneType(cls, damageType, amount = 100):
+    def oneType(cls, damageType, amount=100):
         pattern = DamagePattern()
         pattern.update(amount if damageType == "em" else 0,
                        amount if damageType == "thermal" else 0,

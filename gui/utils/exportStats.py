@@ -13,6 +13,7 @@ resonanceNames = {"shield": ["shield" + s for s in damageTypeResonanceNames],
                   "armor": ["armor" + s for s in damageTypeResonanceNames],
                   "hull": [s[0].lower() + s[1:] for s in damageTypeResonanceNames]}
 
+
 def firepowerSection(fit):
     """ Returns the text of the firepower section"""
     firepower = [fit.totalDPS, fit.weaponDPS, fit.droneDPS, fit.totalVolley]
@@ -23,6 +24,7 @@ def firepowerSection(fit):
     return "DPS: {} (".format(firepowerStr[0]) + \
            ("Weapon: {}, Drone: {}, ".format(*firepowerStr[1:3]) if showWeaponAndDroneDps else "") + \
            ("Volley: {})\n".format(firepowerStr[3]))
+
 
 def tankSection(fit):
     """ Returns the text of the tank section"""
@@ -39,6 +41,7 @@ def tankSection(fit):
         "Shield  {:>7} {:>7.0%} {:>7.0%} {:>7.0%} {:>7.0%}\n".format(ehpStr[0], *resists["shield"]) + \
         "Armor   {:>7} {:>7.0%} {:>7.0%} {:>7.0%} {:>7.0%}\n".format(ehpStr[1], *resists["armor"]) + \
         "Hull    {:>7} {:>7.0%} {:>7.0%} {:>7.0%} {:>7.0%}\n".format(ehpStr[2], *resists["hull"])
+
 
 def repsSection(fit):
     """ Returns the text of the repairs section"""
@@ -134,6 +137,7 @@ def repsSection(fit):
                     text += line + "\n"
     return text
 
+
 def miscSection(fit):
     text = ""
     text += "Speed: {} m/s\n".format(formatAmount(fit.maxSpeed, 3, 0, 0))
@@ -153,9 +157,10 @@ def miscSection(fit):
 
     return text
 
+
 def statsExportText(fit):
     """ Returns the text of the stats export of the given fit"""
-    sections = filter(None, (firepowerSection(fit), #Prune empty sections
+    sections = filter(None, (firepowerSection(fit),  # Prune empty sections
                              tankSection(fit),
                              repsSection(fit),
                              miscSection(fit)))
