@@ -24,8 +24,8 @@ saveInRoot = False
 
 # Version data
 
-version = "2.4.0"
-tag = "Stable"
+version = "0.0.1"
+tag = "Dev"
 expansionName = "YC120.8"
 expansionVersion = "1.0"
 evemonMinVersion = "4081"

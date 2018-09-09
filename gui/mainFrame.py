@@ -39,6 +39,9 @@ import config
 from eos.config import gamedata_version, gamedata_date
 import datetime
 
+import urllib.request
+import json
+
 import gui.aboutData
 from gui.chrome_tabs import ChromeNotebook
 import gui.globalEvents as GE
@@ -88,6 +91,7 @@ from time import gmtime, strftime
 import threading
 import webbrowser
 import wx.adv
+import service.esiapi as esiapi
 
 from service.esi import Esi, LoginMethod
 from gui.esiFittings import EveFittings, ExportToEve, SsoCharacterMgmt
@@ -144,6 +148,39 @@ class OpenFitsThread(threading.Thread):
 
         wx.PostEvent(self.mainFrame, FitSelected(fitID=self.fits[-1], startup=2))
         wx.CallAfter(self.callback)
+
+
+class ImportFromZKillboardThread(threading.Thread):
+    def __init__(self, url, progressCallback, doneCallback):
+        threading.Thread.__init__(self)
+        self.name = "ImportingFromZKillboard"
+        self.progressCallback = progressCallback
+        self.doneCallback = doneCallback
+        self.url = url
+        self.start()
+
+    def run(self):
+        with urllib.request.urlopen(self.url) as response:
+            killmails = json.loads(response.read())
+            for count,killmail in enumerate(killmails):
+                try:
+                    Port.importZKillboard(killmail, self.fitName)
+                    wx.CallAfter(lambda: self.progressCallback("Processed %d killmails" % (count+1)))
+                except Exception as ex:
+                    errorMsg = str(ex)
+                    wx.CallAfter(lambda: self.doneCallback("Error processing killmail(s): %s" % errorMsg))
+                    return
+            wx.CallAfter(lambda: self.doneCallback("Processed %d killmails" % (count+1)))
+
+    @staticmethod
+    def fitName(killmail, fit):
+        # TODO: use the character's alliance at the time of the killmail
+        victimId = killmail["victim"]["character_id"]
+        characterInfo = esiapi.fetchCharacterInfo(victimId)
+        allianceId = characterInfo["alliance_id"]
+        allianceInfo = esiapi.fetchAllianceInfo(allianceId)
+        return allianceInfo["ticker"]
+
 
 
 # todo: include IPortUser again
@@ -506,6 +543,8 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.showExportDialog, id=wx.ID_SAVEAS)
         # Import from Clipboard
         self.Bind(wx.EVT_MENU, self.importFromClipboard, id=wx.ID_PASTE)
+        # Import from ZKillboard
+        self.Bind(wx.EVT_MENU, self.importFromZKillboard, id=menuBar.importFitsFromZkillboard)
         # Backup fits
         self.Bind(wx.EVT_MENU, self.backupToXml, id=menuBar.backupFitsId)
         # Export skills needed
@@ -743,6 +782,22 @@ class MainFrame(wx.Frame):
             pyfalog.error("Attempt to import failed:\n{0}", clipboard)
         else:
             self._openAfterImport(fits)
+
+    def importFromZKillboard(self, event):
+        dlg = wx.TextEntryDialog(self, "zkillboard.com API URL", "ZKillboard URL")
+        dlg.ShowModal()
+        url = dlg.GetValue()
+        dlg.Destroy()
+        self.waitDialog = wx.BusyInfo("Loading killmails from %s" % url)
+        ImportFromZKillboardThread(url, self.onImportFromZKillboardUpdate, self.onFinishedImportingFromZKillboard)
+
+    def onImportFromZKillboardUpdate(self, info):
+        self.closeWaitDialog()
+        self.waitDialog = wx.BusyInfo(info)
+
+    def onFinishedImportingFromZKillboard(self, info):
+        self.closeWaitDialog()
+        wx.MessageBox(info, "Import finished")
 
     def exportToClipboard(self, event):
         CopySelectDict = {CopySelectDialog.copyFormatEft: self.clipboardEft,

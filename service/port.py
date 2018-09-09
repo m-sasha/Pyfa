@@ -17,6 +17,8 @@
 # along with pyfa.  If not, see <http://www.gnu.org/licenses/>.
 # =============================================================================
 
+from datetime import datetime
+import time
 import re
 import os
 import xml.dom
@@ -332,22 +334,30 @@ class Port(object):
         return True, fit_list
 
     @staticmethod
+    def saveImportedFit(fit):
+        modified = fit.modified
+        sFit = svcFit.getInstance()
+        fit.character = sFit.character
+        fit.damagePattern = sFit.pattern
+        fit.targetResists = sFit.targetResists
+        if len(fit.implants) > 0:
+            fit.implantLocation = ImplantLocation.FIT
+        else:
+            useCharImplants = sFit.serviceFittingOptions["useCharacterImplantsByDefault"]
+            fit.implantLocation = ImplantLocation.CHARACTER if useCharImplants else ImplantLocation.FIT
+        fit.modified = modified  # Restore modified field, which we changed by modifying the fit
+
+        db.save(fit)
+        return fit
+
+    @staticmethod
     def importFitFromBuffer(bufferStr, activeFit=None):
         # type: (basestring, object) -> object
         # TODO: catch the exception?
         # activeFit is reserved?, bufferStr is unicode? (assume only clipboard string?
-        sFit = svcFit.getInstance()
         _, fits = Port.importAuto(bufferStr, activeFit=activeFit)
         for fit in fits:
-            fit.character = sFit.character
-            fit.damagePattern = sFit.pattern
-            fit.targetResists = sFit.targetResists
-            if len(fit.implants) > 0:
-                fit.implantLocation = ImplantLocation.FIT
-            else:
-                useCharImplants = sFit.serviceFittingOptions["useCharacterImplantsByDefault"]
-                fit.implantLocation = ImplantLocation.CHARACTER if useCharImplants else ImplantLocation.FIT
-            db.save(fit)
+            Port.saveImportedFit(fit)
         return fits
 
     """Service which houses all import/export format functions"""
@@ -535,6 +545,94 @@ class Port(object):
                 fitobj.modules.append(module)
 
         return fitobj
+
+    @staticmethod
+    def importZKillboard(killmail, fitNameFunction=lambda killmail,fit: fit.ship.item.name):
+        """Parses a single killmail from the zkillboard API. The argument is an already parsed JSON"""
+        sMkt = Market.getInstance()
+        fit = Fit()
+        victim = killmail["victim"]
+        items = victim["items"]
+
+        try:
+            ship = victim["ship_type_id"]
+            try:
+                fit.ship = Ship(sMkt.getItem(ship))
+            except ValueError:
+                fit.ship = Citadel(sMkt.getItem(ship))
+        except:
+            pyfalog.warning("Caught exception in importESI")
+            return None
+
+        fit.name = fitNameFunction(killmail, fit)
+
+        items.sort(key=lambda k: k["flag"])
+
+        moduleList = []
+        moduleByFlag = {}
+        chargeByFlag = {}
+        for module in items:
+            try:
+                item = sMkt.getItem(module["item_type_id"], eager="group.category")
+                if not item.published:
+                    continue
+                flag = module["flag"]
+                if flag == INV_FLAG_DRONEBAY:
+                    d = Drone(item)
+                    d.amount = module.get("quantity_destroyed", 0) + module.get("quantity_dropped", 0)
+                    fit.drones.append(d)
+                elif flag == INV_FLAG_CARGOBAY:
+                    c = fit.cargo.findFirst(item)
+                    if c is None:
+                        c = Cargo(item)
+                        fit.cargo.append(c)
+                    c.amount += module.get("quantity_destroyed", 0) + module.get("quantity_dropped", 0)
+
+                elif flag == INV_FLAG_FIGHTER:
+                    fighter = Fighter(item)
+                    fit.fighters.append(fighter)
+                else:
+                    try:
+                        m = Module(item)
+                        moduleByFlag[flag] = m
+                    # When item can't be added to any slot (unknown item or just charge), ignore it
+                    except ValueError:
+                        chargeByFlag[flag] = item
+                        pyfalog.debug("Item can't be added to any slot (unknown item or just charge)")
+                        continue
+                    # Add subsystems before modules to make sure T3 cruisers have subsystems installed
+                    if item.category.name == "Subsystem":
+                        if m.fits(fit):
+                            fit.modules.append(m)
+                    else:
+                        if m.isValidState(State.ACTIVE):
+                            m.state = State.ACTIVE
+
+                        moduleList.append(m)
+
+            except:
+                pyfalog.warning("Could not process module.")
+                continue
+
+        # Recalc to get slot numbers correct for T3 cruisers
+        svcFit.getInstance().recalc(fit)
+
+        for flag in moduleByFlag.keys():
+            module = moduleByFlag[flag]
+            charge = chargeByFlag.get(flag, None)
+            if (not charge is None) and module.isValidCharge(charge) and module.charge is None:
+                module.charge = charge
+
+        for module in moduleList:
+            if module.fits(fit):
+                fit.modules.append(module)
+
+        km_time = datetime.strptime(killmail["killmail_time"], "%Y-%m-%dT%H:%M:%SZ")
+        fit.timestamp = time.mktime(km_time.timetuple())
+        fit.modified = fit.created = km_time
+
+        return Port.saveImportedFit(fit)
+
 
     @staticmethod
     def importDna(string):

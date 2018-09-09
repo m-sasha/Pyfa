@@ -43,6 +43,7 @@ class MainMenuBar(wx.MenuBar):
         self.implantSetEditorId = wx.NewId()
         self.graphFrameId = wx.NewId()
         self.backupFitsId = wx.NewId()
+        self.importFitsFromZkillboard = wx.NewId()
         self.exportSkillsNeededId = wx.NewId()
         self.importCharacterId = wx.NewId()
         self.exportHtmlId = wx.NewId()
@@ -79,6 +80,7 @@ class MainMenuBar(wx.MenuBar):
 
         fileMenu.Append(self.backupFitsId, "&Backup All Fittings", "Backup all fittings to a XML file")
         fileMenu.Append(wx.ID_OPEN, "&Import Fittings\tCTRL+O", "Import fittings into pyfa")
+        fileMenu.Append(self.importFitsFromZkillboard, "Import From ZKillboard", "Import fittings from zkillboard.com")
         fileMenu.Append(wx.ID_SAVEAS, "&Export Fitting\tCTRL+S", "Export fitting to another format")
         fileMenu.AppendSeparator()
         fileMenu.Append(self.exportHtmlId, "Export HTML", "Export fits to HTML file (set in Preferences)")
