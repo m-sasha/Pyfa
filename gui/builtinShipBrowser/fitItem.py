@@ -468,9 +468,13 @@ class FitItem(SFItem.SFBrowserItem):
         self.fitNamey = (rect.height - self.shipBmp.GetHeight()) / 2
 
         mdc.SetFont(self.fontBig)
-        wtext, htext = mdc.GetTextExtent(self.fitName)
+        fitNameW, fitNameH = mdc.GetTextExtent(self.fitName)
 
-        self.timestampy = self.fitNamey + htext
+        mdc.SetFont(self.fontNormal)
+        _, timestampH = mdc.GetTextExtent("1234567890")
+
+        self.fitNamey = (rect.height - (fitNameH + timestampH)) / 2
+        self.timestampy = self.fitNamey + fitNameH
 
         mdc.SetFont(self.fontSmall)
 

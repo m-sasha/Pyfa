@@ -215,9 +215,13 @@ class ShipItem(SFItem.SFBrowserItem):
         shipName, shipTrait, fittings = self.shipFittingInfo
 
         mdc.SetFont(self.fontBig)
-        wtext, htext = mdc.GetTextExtent(shipName)
+        shipNameW, shipNameH = mdc.GetTextExtent(shipName)
 
-        self.fittingsy = self.shipNamey + htext
+        mdc.SetFont(self.fontNormal)
+        fittingsW, fittingsH = mdc.GetTextExtent("No fits")
+
+        self.shipNamey = (rect.height - (shipNameH + fittingsH)) / 2
+        self.fittingsy = self.shipNamey + shipNameH
 
         mdc.SetFont(self.fontSmall)
 
