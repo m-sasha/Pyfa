@@ -37,6 +37,8 @@ from eos.gamedata import Category as types_Category, Group as types_Group, Item 
     MetaGroup as types_MetaGroup, MetaType as types_MetaType
 from collections import OrderedDict
 
+import at.rules
+
 pyfalog = Logger(__name__)
 
 # Event which tells threads dependent on Market that it's initialized
@@ -710,7 +712,7 @@ class Market(object):
         if group.name in self.GROUPS_FORCEPUBLISHED:
             pub = self.GROUPS_FORCEPUBLISHED[group.name]
         else:
-            pub = group.published
+            pub = group.published and at.rules.isGroupAllowed(group)
         return pub
 
     def getMarketRoot(self):
@@ -753,6 +755,8 @@ class Market(object):
         for item in results:
             if self.getPublicityByItem(item):
                 ships.add(item)
+        ships = [ship for ship in ships if self.getPublicityByGroup(ship.group)]
+
         return ships
 
     def searchItems(self, name, callback, filterOn=True):
