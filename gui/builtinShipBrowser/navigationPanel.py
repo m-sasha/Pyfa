@@ -86,9 +86,11 @@ class NavigationPanel(SFItem.SFBrowserItem):
         search = self.BrowserSearchBox.GetValue()
         # Make sure we do not count wildcard as search symbol
         realsearch = search.replace("*", "")
-        if len(realsearch) >= 3:
+        if len(realsearch) >= 2:
             self.lastSearch = search
             wx.PostEvent(self.shipBrowser, SearchSelected(text=search, back=False))
+        else:
+            self.OnHistoryReset()
 
     def ToggleSearchBox(self):
         if self.BrowserSearchBox.IsShown():
