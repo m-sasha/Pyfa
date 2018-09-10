@@ -17,6 +17,8 @@ from gui.builtinShipBrowser.navigationPanel import NavigationPanel
 from gui.builtinShipBrowser.raceSelector import RaceSelector
 from gui.builtinShipBrowser.pfStaticText import PFStaticText
 
+import at.rules
+
 pyfalog = Logger(__name__)
 
 
@@ -233,13 +235,14 @@ class ShipBrowser(wx.Panel):
 
             shipTrait = ship.traits.traitText if (ship.traits is not None) else ""  # empty string if no traits
 
+            shipDisplayName = self.shipDisplayName(ship)
             if self.filterShipsWithNoFits:
                 if fits > 0:
                     if filter_:
-                        self.lpane.AddWidget(ShipItem(self.lpane, ship.ID, (ship.name, shipTrait, fits), ship.race, ship.graphicID))
+                        self.lpane.AddWidget(ShipItem(self.lpane, ship.ID, (shipDisplayName, shipTrait, fits), ship.race, ship.graphicID))
             else:
                 if filter_:
-                    self.lpane.AddWidget(ShipItem(self.lpane, ship.ID, (ship.name, shipTrait, fits), ship.race, ship.graphicID))
+                    self.lpane.AddWidget(ShipItem(self.lpane, ship.ID, (shipDisplayName, shipTrait, fits), ship.race, ship.graphicID))
 
         self.raceselect.RebuildRaces(racesList)
 
@@ -342,6 +345,10 @@ class ShipBrowser(wx.Panel):
         self.lpane.Thaw()
         self.raceselect.RebuildRaces(self.RACE_ORDER)
 
+    @staticmethod
+    def shipDisplayName(ship):
+        return "%s (%d)" % (ship.name, at.rules.shipPointValue(ship))
+
     def searchStage(self, event):
 
         self.lpane.ShowLoading(False)
@@ -373,7 +380,7 @@ class ShipBrowser(wx.Panel):
                 shipTrait = ship.traits.traitText if (ship.traits is not None) else ""  # empty string if no traits
 
                 self.lpane.AddWidget(
-                    ShipItem(self.lpane, ship.ID, (ship.name, shipTrait, len(sFit.getFitsWithShip(ship.ID))),
+                    ShipItem(self.lpane, ship.ID, (self.shipDisplayName(ship), shipTrait, len(sFit.getFitsWithShip(ship.ID))),
                              ship.race, ship.graphicID))
 
             for ID, name, shipID, shipName, booster, timestamp, notes in fitList:
