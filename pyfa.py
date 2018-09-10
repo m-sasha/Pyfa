@@ -132,7 +132,7 @@ if __name__ == "__main__":
 
         # set title if it wasn't supplied by argument
         if options.title is None:
-            options.title = "pyfa %s - Python Fitting Assistant" % (config.getVersion())
+            options.title = "PyfaAT %s" % (config.getVersion())
 
         pyfa = wx.App(False)
         mf = MainFrame(options.title)
