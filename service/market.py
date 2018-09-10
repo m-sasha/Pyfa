@@ -704,7 +704,7 @@ class Market(object):
         if item.name in self.ITEMS_FORCEPUBLISHED:
             pub = self.ITEMS_FORCEPUBLISHED[item.name]
         else:
-            pub = item.published
+            pub = item.published and at.rules.isShipAllowed(item)
         return pub
 
     def getPublicityByGroup(self, group):
@@ -712,7 +712,7 @@ class Market(object):
         if group.name in self.GROUPS_FORCEPUBLISHED:
             pub = self.GROUPS_FORCEPUBLISHED[group.name]
         else:
-            pub = group.published and at.rules.isGroupAllowed(group)
+            pub = group.published and at.rules.isShipGroupAllowed(group)
         return pub
 
     def getMarketRoot(self):
@@ -739,6 +739,7 @@ class Market(object):
         """Get ships for given group id"""
         grp = self.getGroup(grpid, eager=("items", "items.group", "items.marketGroup"))
         ships = self.getItemsByGroup(grp)
+
         return ships
 
     def getShipListDelayed(self, id_, callback):
