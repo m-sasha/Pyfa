@@ -279,8 +279,8 @@ class MainFrame(wx.Frame):
         self.LoadPreviousOpenFits()
 
         # Check for updates
-        self.sUpdate = Update.getInstance()
-        self.sUpdate.CheckUpdate(self.ShowUpdateBox)
+        # self.sUpdate = Update.getInstance()
+        # self.sUpdate.CheckUpdate(self.ShowUpdateBox)
 
         self.Bind(GE.EVT_SSO_LOGIN, self.onSSOLogin)
         self.Bind(GE.EVT_SSO_LOGGING_IN, self.ShowSsoLogin)
