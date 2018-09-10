@@ -13,36 +13,35 @@ from gui.bitmap_loader import BitmapLoader
 from gui.contextMenu import ContextMenu
 from service.fit import Fit
 from service.market import Market
+import at.rules
 
 pyfalog = Logger(__name__)
 
 
 class ShipItem(SFItem.SFBrowserItem):
-    def __init__(self, parent, shipID=None, shipFittingInfo=("Test", "TestTrait", 2, 5), itemData=None, graphicID=None,
+    def __init__(self, parent, ship,
                  id=wx.ID_ANY, pos=wx.DefaultPosition,
                  size=(0, 40), style=0):
         SFItem.SFBrowserItem.__init__(self, parent, size=size)
 
         self.mainFrame = gui.mainFrame.MainFrame.getInstance()
 
-        self._itemData = itemData
-
-        self.shipRace = itemData
-
-        self.shipID = shipID
+        self.shipID = ship.ID
 
         self.fontBig = wx.Font(fonts.BIG, wx.SWISS, wx.NORMAL, wx.BOLD)
         self.fontNormal = wx.Font(fonts.NORMAL, wx.SWISS, wx.NORMAL, wx.NORMAL)
         self.fontSmall = wx.Font(fonts.SMALL, wx.SWISS, wx.NORMAL, wx.NORMAL)
 
         self.shipBmp = None
-        if graphicID:
-            self.shipBmp = BitmapLoader.getBitmap(str(graphicID), "renders")
+        if ship.graphicID:
+            self.shipBmp = BitmapLoader.getBitmap(str(ship.graphicID), "renders")
         if not self.shipBmp:
             self.shipBmp = BitmapLoader.getBitmap("ship_no_image_big", "gui")
 
-        self.shipFittingInfo = shipFittingInfo
-        self.shipName, self.shipTrait, self.shipFits, self.pointValue = shipFittingInfo
+        self.shipName = ship.name
+        self.shipTrait =  shipTrait = ship.traits.traitText if (ship.traits is not None) else ""  # empty string if no traits
+        self.shipFits = len(Fit.getInstance().getFitsWithShip(ship.ID))
+        self.pointValue = at.rules.shipPointValue(ship)
         self.shipTrait = re.sub("<.*?>", " ", self.shipTrait)
 
         self.newBmp = BitmapLoader.getBitmap("fit_add_small", "gui")
@@ -143,8 +142,7 @@ class ShipItem(SFItem.SFBrowserItem):
             self.newBtn.SetBitmap(self.newBmp)
             self.Refresh()
         else:
-            _, _, fittings, _ = self.shipFittingInfo
-            if fittings > 0:
+            if self.shipFits > 0:
                 wx.PostEvent(self.shipBrowser, Stage3Selected(shipID=self.shipID, back=True))
             else:
                 self.newBtnCB()
@@ -208,12 +206,11 @@ class ShipItem(SFItem.SFBrowserItem):
         # self.raceBmpx = self.shipEffx + self.shipEffBk.GetWidth() + self.padding
         # self.raceBmpy = (rect.height - self.raceBmp.GetHeight()) / 2
 
-        shipName, shipTrait, fittings, pointValue = self.shipFittingInfo
-        shipName = "%s (%d)" % (shipName, pointValue)
+        displayShipName = "%s (%d)" % (self.shipName, self.pointValue)
         self.textStartx = self.shipEffx + self.shipEffBk.GetWidth() + self.padding
 
         mdc.SetFont(self.fontBig)
-        shipNameW, shipNameH = mdc.GetTextExtent(shipName)
+        shipNameW, shipNameH = mdc.GetTextExtent(displayShipName)
         mdc.SetFont(self.fontNormal)
         _, fittingsH = mdc.GetTextExtent("No fits")
         self.shipNamey = (rect.height - (shipNameH + fittingsH)) / 2
@@ -251,25 +248,24 @@ class ShipItem(SFItem.SFBrowserItem):
         # mdc.DrawBitmap(self.raceDropShadowBmp, self.raceBmpx + 1, self.raceBmpy + 1)
         # mdc.DrawBitmap(self.raceBmp, self.raceBmpx, self.raceBmpy)
 
-        shipName, shipTrait, fittings, pointValue = self.shipFittingInfo
-        shipName = "%s (%d)" % (shipName, pointValue)
+        displayShipName = "%s (%d)" % (self.shipName, self.pointValue)
 
-        if fittings < 1:
+        if self.shipFits < 1:
             fformat = "No fits"
-        elif fittings == 1:
+        elif self.shipFits == 1:
             fformat = "%d fit"
         else:
             fformat = "%d fits"
 
         mdc.SetFont(self.fontNormal)
-        mdc.DrawText(fformat % fittings if fittings > 0 else fformat, self.textStartx, self.fittingsy)
+        mdc.DrawText(fformat % self.shipFits if self.shipFits > 0 else fformat, self.textStartx, self.fittingsy)
 
         mdc.SetFont(self.fontSmall)
         mdc.DrawText(self.toolbar.hoverLabel, self.thoverx, self.thovery)
 
         mdc.SetFont(self.fontBig)
 
-        psname = drawUtils.GetPartialText(mdc, shipName,
+        psname = drawUtils.GetPartialText(mdc, displayShipName,
                                           self.toolbarx - self.textStartx - self.padding * 2 - self.thoverw)
 
         mdc.DrawText(psname, self.textStartx, self.shipNamey)

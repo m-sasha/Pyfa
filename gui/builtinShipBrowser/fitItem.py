@@ -445,6 +445,10 @@ class FitItem(SFItem.SFBrowserItem):
         self.renameBtn.SetBitmap(self.renameBmp)
         self.Refresh()
 
+    @property
+    def displayedShipName(self):
+        return self.shipName if self.pointValue is None else "%s (%d)" % (self.shipName, self.pointValue)
+
     def UpdateElementsPos(self, mdc):
         rect = self.GetRect()
 
@@ -471,8 +475,7 @@ class FitItem(SFItem.SFBrowserItem):
         fitNameW, fitNameH = mdc.GetTextExtent(self.fitName)
 
         mdc.SetFont(self.fontNormal)
-        displayedShipName = "%s (%d)" % (self.shipName, self.pointValue)
-        _, shipNameH = mdc.GetTextExtent(displayedShipName)
+        _, shipNameH = mdc.GetTextExtent(self.displayedShipName)
 
         self.fitNameY = (rect.height - (fitNameH + shipNameH)) / 2
         self.shipNameY = self.fitNameY + fitNameH
@@ -513,8 +516,7 @@ class FitItem(SFItem.SFBrowserItem):
         # pfdate = drawUtils.GetPartialText(mdc, fitLocalDate,
         #                                   self.toolbarx - self.textStartx - self.padding * 2 - self.thoverw)
 
-        displayedShipName = "%s (%d)" % (self.shipName, self.pointValue)
-        mdc.DrawText(displayedShipName, self.textStartX, self.shipNameY)
+        mdc.DrawText(self.displayedShipName, self.textStartX, self.shipNameY)
 
         mdc.SetFont(self.fontSmall)
         mdc.DrawText(self.toolbar.hoverLabel, self.thoverx, self.thovery)
