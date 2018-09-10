@@ -22,7 +22,7 @@ pyfalog = Logger(__name__)
 
 
 class FitItem(SFItem.SFBrowserItem):
-    def __init__(self, parent, fitID=None, shipFittingInfo=("Test", "TestTrait", "cnc's avatar", 0, 0, None), shipID=None,
+    def __init__(self, parent, fitID=None, shipFittingInfo=("Test", "TestTrait", "cnc's avatar", 0, 0, None, 5), shipID=None,
                  itemData=None, graphicID=None,
                  id=wx.ID_ANY, pos=wx.DefaultPosition,
                  size=(0, 40), style=0):
@@ -57,7 +57,7 @@ class FitItem(SFItem.SFBrowserItem):
             self.shipBmp = BitmapLoader.getBitmap("ship_no_image_big", "gui")
 
         self.shipFittingInfo = shipFittingInfo
-        self.shipName, self.shipTrait, self.fitName, self.fitBooster, self.timestamp, self.notes = shipFittingInfo
+        self.shipName, self.shipTrait, self.fitName, self.fitBooster, self.timestamp, self.notes, self.pointValue = shipFittingInfo
 
         if config.debug:
             self.fitName = '({}) {}'.format(self.fitID, self.fitName)
@@ -463,18 +463,19 @@ class FitItem(SFItem.SFBrowserItem):
 
         self.shipBmpx -= self.animCount
 
-        self.textStartx = self.shipEffx + self.shipEffBk.GetWidth() + self.padding
+        self.textStartX = self.shipEffx + self.shipEffBk.GetWidth() + self.padding
 
-        self.fitNamey = (rect.height - self.shipBmp.GetHeight()) / 2
+        self.fitNameY = (rect.height - self.shipBmp.GetHeight()) / 2
 
         mdc.SetFont(self.fontBig)
         fitNameW, fitNameH = mdc.GetTextExtent(self.fitName)
 
         mdc.SetFont(self.fontNormal)
-        _, timestampH = mdc.GetTextExtent("1234567890")
+        displayedShipName = "%s (%d)" % (self.shipName, self.pointValue)
+        _, shipNameH = mdc.GetTextExtent(displayedShipName)
 
-        self.fitNamey = (rect.height - (fitNameH + timestampH)) / 2
-        self.timestampy = self.fitNamey + fitNameH
+        self.fitNameY = (rect.height - (fitNameH + shipNameH)) / 2
+        self.shipNameY = self.fitNameY + fitNameH
 
         mdc.SetFont(self.fontSmall)
 
@@ -507,12 +508,13 @@ class FitItem(SFItem.SFBrowserItem):
 
         mdc.SetFont(self.fontNormal)
 
-        fitDate = self.timestamp.strftime("%m/%d/%Y %H:%M")
-        fitLocalDate = fitDate  # "%d/%02d/%02d %02d:%02d" % (fitDate[0], fitDate[1], fitDate[2], fitDate[3], fitDate[4])
-        pfdate = drawUtils.GetPartialText(mdc, fitLocalDate,
-                                          self.toolbarx - self.textStartx - self.padding * 2 - self.thoverw)
+        # fitDate = self.timestamp.strftime("%m/%d/%Y %H:%M")
+        # fitLocalDate = fitDate  # "%d/%02d/%02d %02d:%02d" % (fitDate[0], fitDate[1], fitDate[2], fitDate[3], fitDate[4])
+        # pfdate = drawUtils.GetPartialText(mdc, fitLocalDate,
+        #                                   self.toolbarx - self.textStartx - self.padding * 2 - self.thoverw)
 
-        mdc.DrawText(pfdate, self.textStartx, self.timestampy)
+        displayedShipName = "%s (%d)" % (self.shipName, self.pointValue)
+        mdc.DrawText(displayedShipName, self.textStartX, self.shipNameY)
 
         mdc.SetFont(self.fontSmall)
         mdc.DrawText(self.toolbar.hoverLabel, self.thoverx, self.thovery)
@@ -520,12 +522,12 @@ class FitItem(SFItem.SFBrowserItem):
         mdc.SetFont(self.fontBig)
 
         psname = drawUtils.GetPartialText(mdc, self.fitName,
-                                          self.toolbarx - self.textStartx - self.padding * 2 - self.thoverw)
+                                          self.toolbarx - self.textStartX - self.padding * 2 - self.thoverw)
 
-        mdc.DrawText(psname, self.textStartx, self.fitNamey)
+        mdc.DrawText(psname, self.textStartX, self.fitNameY)
 
         if self.tcFitName.IsShown():
-            self.AdjustControlSizePos(self.tcFitName, self.textStartx, self.toolbarx - self.editWidth - self.padding)
+            self.AdjustControlSizePos(self.tcFitName, self.textStartX, self.toolbarx - self.editWidth - self.padding)
 
         tdc = wx.MemoryDC()
         self.dragTLFBmp = wx.Bitmap((self.toolbarx if self.toolbarx < 200 else 200), rect.height, 24)

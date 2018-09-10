@@ -235,14 +235,14 @@ class ShipBrowser(wx.Panel):
 
             shipTrait = ship.traits.traitText if (ship.traits is not None) else ""  # empty string if no traits
 
-            shipDisplayName = self.shipDisplayName(ship)
+            pointValue = at.rules.shipPointValue(ship)
             if self.filterShipsWithNoFits:
                 if fits > 0:
                     if filter_:
-                        self.lpane.AddWidget(ShipItem(self.lpane, ship.ID, (shipDisplayName, shipTrait, fits), ship.race, ship.graphicID))
+                        self.lpane.AddWidget(ShipItem(self.lpane, ship.ID, (ship.name, shipTrait, fits, pointValue), ship.race, ship.graphicID))
             else:
                 if filter_:
-                    self.lpane.AddWidget(ShipItem(self.lpane, ship.ID, (shipDisplayName, shipTrait, fits), ship.race, ship.graphicID))
+                    self.lpane.AddWidget(ShipItem(self.lpane, ship.ID, (ship.name, shipTrait, fits, pointValue), ship.race, ship.graphicID))
 
         self.raceselect.RebuildRaces(racesList)
 
@@ -339,15 +339,11 @@ class ShipBrowser(wx.Panel):
         shipTrait = ship.traits.traitText if (ship.traits is not None) else ""  # empty string if no traits
 
         for ID, name, booster, timestamp, notes, graphicID in fitList:
-            self.lpane.AddWidget(FitItem(self.lpane, ID, (shipName, shipTrait, name, booster, timestamp, notes), shipID, graphicID=graphicID))
+            self.lpane.AddWidget(FitItem(self.lpane, ID, (shipName, shipTrait, name, booster, timestamp, notes, at.rules.shipPointValue(ship)), shipID, graphicID=graphicID))
 
         self.lpane.RefreshList()
         self.lpane.Thaw()
         self.raceselect.RebuildRaces(self.RACE_ORDER)
-
-    @staticmethod
-    def shipDisplayName(ship):
-        return "%s (%d)" % (ship.name, at.rules.shipPointValue(ship))
 
     def searchStage(self, event):
 
@@ -380,7 +376,7 @@ class ShipBrowser(wx.Panel):
                 shipTrait = ship.traits.traitText if (ship.traits is not None) else ""  # empty string if no traits
 
                 self.lpane.AddWidget(
-                    ShipItem(self.lpane, ship.ID, (self.shipDisplayName(ship), shipTrait, len(sFit.getFitsWithShip(ship.ID))),
+                    ShipItem(self.lpane, ship.ID, (ship.name, shipTrait, len(sFit.getFitsWithShip(ship.ID)), at.rules.shipPointValue(ship)),
                              ship.race, ship.graphicID))
 
             for ID, name, shipID, shipName, booster, timestamp, notes in fitList:
@@ -391,7 +387,7 @@ class ShipBrowser(wx.Panel):
 
                 shipTrait = ship.traits.traitText if (ship.traits is not None) else ""  # empty string if no traits
 
-                self.lpane.AddWidget(FitItem(self.lpane, ID, (shipName, shipTrait, name, booster, timestamp, notes), shipID, graphicID=ship.graphicID))
+                self.lpane.AddWidget(FitItem(self.lpane, ID, (ship.name, shipTrait, name, booster, timestamp, notes, at.rules.shipPointValue(ship)), shipID, graphicID=ship.graphicID))
             if len(ships) == 0 and len(fitList) == 0:
                 self.lpane.AddWidget(PFStaticText(self.lpane, label="No matching results."))
             self.lpane.RefreshList(doFocus=False)
@@ -439,7 +435,8 @@ class ShipBrowser(wx.Panel):
                         fit[1],
                         False,
                         fit[2],
-                        fit[4]
+                        fit[4],
+                        None
                     ),
                     shipItem.ID,
                     graphicID=shipItem.graphicID

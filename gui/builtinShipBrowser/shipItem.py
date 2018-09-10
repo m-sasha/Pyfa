@@ -18,7 +18,7 @@ pyfalog = Logger(__name__)
 
 
 class ShipItem(SFItem.SFBrowserItem):
-    def __init__(self, parent, shipID=None, shipFittingInfo=("Test (5)", "TestTrait", 2), itemData=None, graphicID=None,
+    def __init__(self, parent, shipID=None, shipFittingInfo=("Test", "TestTrait", 2, 5), itemData=None, graphicID=None,
                  id=wx.ID_ANY, pos=wx.DefaultPosition,
                  size=(0, 40), style=0):
         SFItem.SFBrowserItem.__init__(self, parent, size=size)
@@ -42,7 +42,7 @@ class ShipItem(SFItem.SFBrowserItem):
             self.shipBmp = BitmapLoader.getBitmap("ship_no_image_big", "gui")
 
         self.shipFittingInfo = shipFittingInfo
-        self.shipName, self.shipTrait, self.shipFits = shipFittingInfo
+        self.shipName, self.shipTrait, self.shipFits, self.pointValue = shipFittingInfo
         self.shipTrait = re.sub("<.*?>", " ", self.shipTrait)
 
         self.newBmp = BitmapLoader.getBitmap("fit_add_small", "gui")
@@ -143,7 +143,7 @@ class ShipItem(SFItem.SFBrowserItem):
             self.newBtn.SetBitmap(self.newBmp)
             self.Refresh()
         else:
-            _, _, fittings = self.shipFittingInfo
+            _, _, fittings, _ = self.shipFittingInfo
             if fittings > 0:
                 wx.PostEvent(self.shipBrowser, Stage3Selected(shipID=self.shipID, back=True))
             else:
@@ -208,7 +208,8 @@ class ShipItem(SFItem.SFBrowserItem):
         # self.raceBmpx = self.shipEffx + self.shipEffBk.GetWidth() + self.padding
         # self.raceBmpy = (rect.height - self.raceBmp.GetHeight()) / 2
 
-        shipName, shipTrait, fittings = self.shipFittingInfo
+        shipName, shipTrait, fittings, pointValue = self.shipFittingInfo
+        shipName = "%s (%d)" % (shipName, pointValue)
         self.textStartx = self.shipEffx + self.shipEffBk.GetWidth() + self.padding
 
         mdc.SetFont(self.fontBig)
@@ -250,7 +251,8 @@ class ShipItem(SFItem.SFBrowserItem):
         # mdc.DrawBitmap(self.raceDropShadowBmp, self.raceBmpx + 1, self.raceBmpy + 1)
         # mdc.DrawBitmap(self.raceBmp, self.raceBmpx, self.raceBmpy)
 
-        shipName, shipTrait, fittings = self.shipFittingInfo
+        shipName, shipTrait, fittings, pointValue = self.shipFittingInfo
+        shipName = "%s (%d)" % (shipName, pointValue)
 
         if fittings < 1:
             fformat = "No fits"
