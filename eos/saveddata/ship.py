@@ -84,6 +84,16 @@ class Ship(ItemAttrShortcut, HandledItem):
         self.itemModifiedAttributes.clear()
         self.commandBonus = 0
 
+    def scanType(self):
+        maxStr = -1
+        result = None
+        for scanType in ("Magnetometric", "Ladar", "Radar", "Gravimetric"):
+            currStr = self.getModifiedItemAttr("scan%sStrength" % scanType)
+            if currStr > maxStr:
+                maxStr = currStr
+                result = scanType
+        return result
+
     def calculateModifiedAttributes(self, fit, runTime, forceProjected=False):
         if forceProjected:
             return
