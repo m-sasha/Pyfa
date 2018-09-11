@@ -564,7 +564,7 @@ class _TabRenderer:
 
             mdc.DrawBitmap(
                 cbmp,
-                self.content_width + self.left_width - cbmp.GetWidth() / 2,
+                self.content_width + self.left_width - cbmp.GetWidth(),
                 (height - cbmp.GetHeight()) / 2)
 
         mdc.SelectObject(wx.NullBitmap)
