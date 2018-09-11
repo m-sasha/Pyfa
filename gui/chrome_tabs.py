@@ -207,7 +207,7 @@ class ChromeNotebook(wx.Panel):
 
         wx.PostEvent(self, PageChanged(current_page, new_page))
 
-    def AddPage(self, win=None, title="Empty Tab", image: wx.Image=None, closeable=True):
+    def AddPage(self, win=None, title="Empty Tab", bitmap: wx.Bitmap=None, closeable=True):
         if self._active_page:
             self._active_page.Hide()
 
@@ -219,7 +219,7 @@ class ChromeNotebook(wx.Panel):
         self.page_container.Layout()
 
         self._pages.append(win)
-        self.tabs_container.AddTab(title, image, closeable)
+        self.tabs_container.AddTab(title, bitmap, closeable)
 
         self._active_page = win
         self.ShowActive(True)
@@ -299,7 +299,7 @@ class ChromeNotebook(wx.Panel):
 
     def SetPageIcon(self, i, icon, refresh=True):
         tab = self.tabs_container.tabs[i]
-        tab.tab_img = icon
+        tab.tab_bmp = icon
         if refresh:
             self.tabs_container.AdjustTabsSize()
             self.Refresh()
@@ -326,8 +326,7 @@ class ChromeNotebook(wx.Panel):
 
 
 class _TabRenderer:
-    def __init__(self, size=(36, 24), text=wx.EmptyString, img: wx.Image=None,
-                 closeable=True):
+    def __init__(self, size=(36, 24), text=wx.EmptyString, bitmap: wx.Bitmap=None, closeable=True):
 
         # tab left/right zones inclination
         self.ctab_left = BitmapLoader.getImage("ctableft", "gui")
@@ -360,7 +359,7 @@ class _TabRenderer:
         self.padding = 4
         self.font = wx.Font(fonts.NORMAL, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False)
 
-        self.tab_img = img
+        self.tab_bmp = bitmap
         self.position = (0, 0)  # Not used internally for rendering - helper for tab container
         self.InitTab()
 
@@ -418,8 +417,8 @@ class _TabRenderer:
         mdc.SelectObject(wx.NullBitmap)
         return totalSize, self.tab_height
 
-    def SetTabImage(self, img):
-        self.tab_img = img
+    def SetTabImage(self, bmp: wx.Bitmap):
+        self.tab_bmp = bmp
 
     def CopyRegion(self, region):
         rect = region.GetBox()
@@ -543,8 +542,8 @@ class _TabRenderer:
         mdc.DrawBitmap(self.tab_back_bitmap, 0, 0, True)
 
         # draw the tab icon
-        if self.tab_img:
-            bmp = wx.Bitmap(self.tab_img.ConvertToGreyscale() if self.disabled else self.tab_img)
+        if self.tab_bmp:
+            bmp = self.tab_bmp.ConvertToDisabled() if self.disabled else self.tab_bmp
             # @todo: is this conditional relevant anymore?
             if self.content_width > 16:
                 # Draw tab icon
@@ -584,8 +583,8 @@ class _TabRenderer:
         height = self.tab_height
         dc.SetFont(self.font)
 
-        if self.tab_img:
-            text_start = self.left_width + self.padding + self.tab_img.GetWidth() / 2
+        if self.tab_bmp:
+            text_start = self.left_width + self.padding + self.tab_bmp.GetWidth() / 2
         else:
             text_start = self.left_width
 
@@ -1194,10 +1193,10 @@ class _TabsContainer(wx.Panel):
 
         self.fx_bmp = wx.Bitmap(img)
 
-    def AddTab(self, title=wx.EmptyString, img=None, closeable=False):
+    def AddTab(self, title=wx.EmptyString, bitmap=None, closeable=False):
         self.ClearTabsSelected()
 
-        tab_renderer = _TabRenderer((200, self.height), title, img, closeable)
+        tab_renderer = _TabRenderer((200, self.height), title, bitmap, closeable)
         tab_renderer.SetSelected(True)
 
         self.tabs.append(tab_renderer)
@@ -1483,10 +1482,10 @@ if __name__ == "__main__":
 
         def OnCreate(self, event):
             tab_name = self.tctrl.GetValue()
-            tab_icon = BitmapLoader.getImage("ship_small", "gui")
+            tab_icon = BitmapLoader.getBitmap("ship_small", "gui")
             self.notebook.AddPage(
                 title=tab_name,
-                image=tab_icon if self.icon_check.GetValue() else None,
+                bitmap=tab_icon if self.icon_check.GetValue() else None,
                 closeable=self.close_check.GetValue())
 
     app = wx.App(redirect=False)   # Error messages go to popup window

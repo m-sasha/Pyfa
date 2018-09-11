@@ -224,15 +224,15 @@ class MainFrame(wx.Frame):
 
         self.notebookBrowsers = ChromeNotebook(self.browser_fitting_split, False)
 
-        marketImg = BitmapLoader.getImage("market_small", "gui")
-        shipBrowserImg = BitmapLoader.getImage("ship_small", "gui")
+        marketImg = BitmapLoader.getBitmap("market_small", "gui")
+        shipBrowserImg = BitmapLoader.getBitmap("ship_small", "gui")
 
         self.marketBrowser = MarketBrowser(self.notebookBrowsers)
-        self.notebookBrowsers.AddPage(self.marketBrowser, "Market", image=marketImg, closeable=False)
+        self.notebookBrowsers.AddPage(self.marketBrowser, "Market", bitmap=marketImg, closeable=False)
         self.marketBrowser.splitter.SetSashPosition(self.marketHeight)
 
         self.shipBrowser = ShipBrowser(self.notebookBrowsers)
-        self.notebookBrowsers.AddPage(self.shipBrowser, "Fittings", image=shipBrowserImg, closeable=False)
+        self.notebookBrowsers.AddPage(self.shipBrowser, "Fittings", bitmap=shipBrowserImg, closeable=False)
 
         self.notebookBrowsers.SetSelection(1)
 

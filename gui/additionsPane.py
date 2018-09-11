@@ -49,38 +49,38 @@ class AdditionsPane(TogglePanel):
 
         baseSizer.Add(self.notebook, 1, wx.EXPAND)
 
-        droneImg = BitmapLoader.getImage("drone_small", "gui")
-        fighterImg = BitmapLoader.getImage("fighter_small", "gui")
-        implantImg = BitmapLoader.getImage("implant_small", "gui")
-        boosterImg = BitmapLoader.getImage("booster_small", "gui")
-        projectedImg = BitmapLoader.getImage("projected_small", "gui")
-        gangImg = BitmapLoader.getImage("fleet_fc_small", "gui")
-        cargoImg = BitmapLoader.getImage("cargo_small", "gui")
-        notesImg = BitmapLoader.getImage("skill_small", "gui")
+        droneImg = BitmapLoader.getBitmap("drone_small", "gui")
+        fighterImg = BitmapLoader.getBitmap("fighter_small", "gui")
+        implantImg = BitmapLoader.getBitmap("implant_small", "gui")
+        boosterImg = BitmapLoader.getBitmap("booster_small", "gui")
+        projectedImg = BitmapLoader.getBitmap("projected_small", "gui")
+        gangImg = BitmapLoader.getBitmap("fleet_fc_small", "gui")
+        cargoImg = BitmapLoader.getBitmap("cargo_small", "gui")
+        notesImg = BitmapLoader.getBitmap("skill_small", "gui")
 
         self.drone = DroneView(self.notebook)
-        self.notebook.AddPage(self.drone, "Drones", image=droneImg, closeable=False)
+        self.notebook.AddPage(self.drone, "Drones", bitmap=droneImg, closeable=False)
 
         self.fighter = FighterView(self.notebook)
-        self.notebook.AddPage(self.fighter, "Fighters", image=fighterImg, closeable=False)
+        self.notebook.AddPage(self.fighter, "Fighters", bitmap=fighterImg, closeable=False)
 
         self.cargo = CargoView(self.notebook)
-        self.notebook.AddPage(self.cargo, "Cargo", image=cargoImg, closeable=False)
+        self.notebook.AddPage(self.cargo, "Cargo", bitmap=cargoImg, closeable=False)
 
         self.implant = ImplantView(self.notebook)
-        self.notebook.AddPage(self.implant, "Implants", image=implantImg, closeable=False)
+        self.notebook.AddPage(self.implant, "Implants", bitmap=implantImg, closeable=False)
 
         self.booster = BoosterView(self.notebook)
-        self.notebook.AddPage(self.booster, "Boosters", image=boosterImg, closeable=False)
+        self.notebook.AddPage(self.booster, "Boosters", bitmap=boosterImg, closeable=False)
 
         self.projectedPage = ProjectedView(self.notebook)
-        self.notebook.AddPage(self.projectedPage, "Projected", image=projectedImg, closeable=False)
+        self.notebook.AddPage(self.projectedPage, "Projected", bitmap=projectedImg, closeable=False)
 
         self.gangPage = CommandView(self.notebook)
-        self.notebook.AddPage(self.gangPage, "Command", image=gangImg, closeable=False)
+        self.notebook.AddPage(self.gangPage, "Command", bitmap=gangImg, closeable=False)
 
         self.notes = NotesView(self.notebook)
-        self.notebook.AddPage(self.notes, "Notes", image=notesImg, closeable=False)
+        self.notebook.AddPage(self.notes, "Notes", bitmap=notesImg, closeable=False)
 
         self.notebook.SetSelection(0)
 
