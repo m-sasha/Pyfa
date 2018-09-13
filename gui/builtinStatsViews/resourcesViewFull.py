@@ -153,7 +153,7 @@ class ResourcesViewFull(StatsView):
 
                 stats = wx.BoxSizer(wx.VERTICAL)
                 absolute = wx.BoxSizer(wx.HORIZONTAL)
-                stats.Add(absolute, 0, wx.EXPAND)
+                stats.Add(absolute, 0, wx.ALIGN_CENTER_HORIZONTAL)
 
                 b = wx.BoxSizer(wx.HORIZONTAL)
                 main.Add(b, 1, wx.ALIGN_CENTER)
@@ -181,7 +181,7 @@ class ResourcesViewFull(StatsView):
 
                 gauge = PyGauge(parent, gauge_font, 1)
                 gauge.SetValueRange(0, 0)
-                gauge.SetMinSize((self.getTextExtentW("1.999M/1.99M MW"), 23))
+                gauge.SetMinSize((self.getTextExtentW("1.999M / 1.999M MW"), 23))
                 gauge.SetFractionDigits(2)
 
                 setattr(self, "gauge%s%s" % (panel.capitalize(), capitalizedType), gauge)
