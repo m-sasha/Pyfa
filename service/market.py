@@ -703,23 +703,15 @@ class Market(object):
         """Return if an item is published"""
         if item.name in self.ITEMS_FORCEPUBLISHED:
             return self.ITEMS_FORCEPUBLISHED[item.name]
-        elif not item.published:
-            return False
-        elif item.category.name == "Ship":
-            return at.rules.isShipAllowed(item)
         else:
-            return True
+            return item.published and at.rules.isItemAllowed(item)
 
     def getPublicityByGroup(self, group):
         """Return if an group is published"""
         if group.name in self.GROUPS_FORCEPUBLISHED:
             return self.GROUPS_FORCEPUBLISHED[group.name]
-        elif not group.published:
-            return False
-        elif group.category.name == "Ship":
-            return at.rules.isShipGroupAllowed(group)
         else:
-            return True
+            return group.published and at.rules.isGroupAllowed(group)
 
     def getMarketRoot(self):
         """

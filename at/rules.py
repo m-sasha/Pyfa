@@ -1,37 +1,7 @@
 import eos.gamedata
 
 
-def isShipGroupAllowed(group: eos.gamedata.Group):
-    # noinspection PyUnresolvedReferences
-    return group.category.name == "Ship" and group.name in {
-        'Combat Recon Ship',
-        'Frigate',
-        'Cruiser',
-        'Battleship',
-        'Industrial',
-        'Command Ship',
-        'Interdictor',
-        'Tactical Destroyer',
-        'Combat Battlecruiser',
-        'Destroyer',
-        'Attack Battlecruiser',
-        'Covert Ops',
-        'Interceptor',
-        'Logistics',
-        'Force Recon Ship',
-        'Stealth Bomber',
-        'Strategic Cruiser',
-        'Assault Frigate',
-        'Black Ops',
-        'Heavy Assault Cruiser',
-        'Logistics Frigate',
-        'Electronic Attack Ship',
-        'Heavy Interdiction Cruiser',
-        'Limited Issue Ships',
-        'Command Destroyer',
-        'Marauder'
-    }
-
+# Point values
 PIRATE_FACTION_BS = 23
 MARAUDER = 22
 NAVY_FACTION_BS = 21
@@ -74,9 +44,42 @@ SUNESIS = 1
 ROOKIE_SHIP = 1
 
 
+def isShipGroupAllowed(group: eos.gamedata.Group):
+    # noinspection PyUnresolvedReferences
+    return group.name in {
+        'Combat Recon Ship',
+        'Frigate',
+        'Cruiser',
+        'Battleship',
+        'Industrial',
+        'Command Ship',
+        'Interdictor',
+        'Tactical Destroyer',
+        'Combat Battlecruiser',
+        'Destroyer',
+        'Attack Battlecruiser',
+        'Covert Ops',
+        'Interceptor',
+        'Logistics',
+        'Force Recon Ship',
+        'Stealth Bomber',
+        'Strategic Cruiser',
+        'Assault Frigate',
+        'Black Ops',
+        'Heavy Assault Cruiser',
+        'Logistics Frigate',
+        'Electronic Attack Ship',
+        'Heavy Interdiction Cruiser',
+        'Limited Issue Ships',
+        'Command Destroyer',
+        'Marauder'
+    }
+
+
 disallowedShips = {
     "Nestor", "Marshal", "Enforcer", "Pacifier", "Monitor"
 }
+
 
 exceptionalShipPointValues = [
     ({"Bantam", "Burst", "Inquisitor", "Navitas"},  T1_SUPPORT_FRIGATE),
@@ -90,6 +93,7 @@ exceptionalShipPointValues = [
     ({"Immolator", "Echo", "Hematos", "Taipan", "Violator"}, PIRATE_FACTION_ROOKIE)
 
 ]
+
 
 pointValuesByMarketGroupName = {
     "Ships": {
@@ -197,3 +201,23 @@ def shipPointValue(ship: eos.gamedata.Item):
 def isShipAllowed(ship: eos.gamedata.Item):
     # noinspection PyUnresolvedReferences
     return (ship.category.name == "Ship") and (not shipPointValue(ship) is None)
+
+
+def isItemAllowed(item: eos.gamedata.Item):
+    # noinspection PyUnresolvedReferences
+    categoryName = item.category.name
+    if categoryName == "Ship":
+        return isShipAllowed(item)
+    elif categoryName == "Structure":
+        return False
+    else:
+        return True
+
+
+def isGroupAllowed(group: eos.gamedata.Group):
+    # noinspection PyUnresolvedReferences
+    categoryName = group.category.name
+    if categoryName == "Ship":
+        return isShipGroupAllowed(group)
+    else:
+        return False
