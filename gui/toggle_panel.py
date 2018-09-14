@@ -37,13 +37,13 @@ class TogglePanel (wx.Panel):
 
         # Add arrow
         self.header_arrow = wx.StaticText(self.header_panel, wx.ID_ANY,
-                                          "\u25bc", size=wx.Size((10, -1)))
-        header_sizer.Add(self.header_arrow, 0, wx.RIGHT, 5)
+                                          "\u25bc")
+        header_sizer.Add(self.header_arrow, 0, wx.RIGHT | wx.ALIGN_BOTTOM, 2)
 
         # Add header text
         self.header_label = wx.StaticText(self.header_panel, wx.ID_ANY, "")
         font = parent.GetFont()
-        font.SetWeight(wx.BOLD)
+        font.SetWeight(wx.FONTWEIGHT_BOLD)
         self.header_label.SetFont(font)
         header_sizer.Add(self.header_label, 0, wx.RIGHT, 5)
 
@@ -167,7 +167,7 @@ if __name__ == "__main__":
 
                 content_sizer = wx.BoxSizer(wx.HORIZONTAL)
                 header = wx.StaticText(content_panel, -1, "TogglePanel Test")
-                header.SetFont(wx.Font(10 + (x * 3), wx.SWISS, wx.NORMAL, wx.BOLD))
+                header.SetFont(wx.Font(10 + (x * 3), wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
                 content_sizer.Add(header, 0, wx.ALL, 10)
                 content_panel.SetSizer(content_sizer)
 
