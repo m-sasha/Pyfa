@@ -243,7 +243,7 @@ class MainFrame(wx.Frame):
         self.fitting_additions_split.SplitHorizontally(self.fitMultiSwitch, self.additionsPane, -200)
         self.fitting_additions_split.SetMinimumPaneSize(200)
         self.fitting_additions_split.SetSashPosition(self.fittingHeight)
-        self.fitting_additions_split.SetSashGravity(1.0)
+        # self.fitting_additions_split.SetSashGravity(1.0)
 
         cstatsSizer = wx.BoxSizer(wx.VERTICAL)
 
