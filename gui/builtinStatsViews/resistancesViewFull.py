@@ -92,7 +92,7 @@ class ResistancesViewFull(StatsView):
         for i in range(4):
             sizerResistances.AddGrowableCol(i + 1)
 
-        sizerResistances.Add(self.stEHPs, wx.GBPosition(row, col), wx.GBSpan(1, 1), wx.ALIGN_CENTER)
+        sizerResistances.Add(self.stEHPs, wx.GBPosition(row, col), wx.GBSpan(1, 1), wx.ALIGN_RIGHT)
         col = 0
         row += 1
 
@@ -110,7 +110,7 @@ class ResistancesViewFull(StatsView):
                 col += 1
 
             else:
-                sizerResistances.Add(wx.StaticLine(contentPanel, wx.ID_ANY), wx.GBPosition(row, col), wx.GBSpan(1, 6),
+                sizerResistances.Add(wx.StaticLine(contentPanel, wx.ID_ANY), wx.GBPosition(row, col+1), wx.GBSpan(1, 4),
                                      wx.EXPAND | wx.ALIGN_CENTER)
                 row += 1
                 col = 0
@@ -145,8 +145,8 @@ class ResistancesViewFull(StatsView):
             box = wx.BoxSizer(wx.VERTICAL)
             box.SetMinSize(wx.Size(self.getTextExtentW("WWWWk"), -1))
 
-            lbl = wx.StaticText(contentPanel, wx.ID_ANY, "0" if tankType != "damagePattern" else "")
-            box.Add(lbl, 0, wx.ALIGN_CENTER)
+            lbl = wx.StaticText(contentPanel, wx.ID_ANY, "0" if tankType != "damagePattern" else "Pattern")
+            box.Add(lbl, 0, wx.ALIGN_RIGHT)
 
             setattr(self, "labelResistance%sEhp" % tankType.capitalize(), lbl)
             sizerResistances.Add(box, wx.GBPosition(row, col), wx.GBSpan(1, 1), wx.ALIGN_CENTER)

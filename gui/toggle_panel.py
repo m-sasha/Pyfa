@@ -57,7 +57,7 @@ class TogglePanel (wx.Panel):
         self.content_panel.SetSizer(self.content_sizer)
 
         self.main_sizer.Add(self.content_panel, 0, wx.EXPAND | wx.RIGHT |
-                            wx.LEFT, 5)
+                            wx.LEFT)
 
         self.Layout()
 

@@ -38,6 +38,7 @@ class CharacterSelection(wx.Panel):
 
         wx.Panel.__init__(self, parent)
         mainSizer = wx.BoxSizer(wx.HORIZONTAL)
+        mainSizer.AddSpacer(8)
         self.SetSizer(mainSizer)
 
         mainSizer.Add(wx.StaticText(self, wx.ID_ANY, "Character: "), 0, wx.CENTER | wx.RIGHT | wx.LEFT, 3)
@@ -71,6 +72,7 @@ class CharacterSelection(wx.Panel):
         self.skillReqsStaticBitmap = wx.StaticBitmap(self)
         self.skillReqsStaticBitmap.SetBitmap(self.cleanSkills)
         mainSizer.Add(self.skillReqsStaticBitmap, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT | wx.LEFT, 3)
+        mainSizer.AddSpacer(8)
 
         self.skillReqsStaticBitmap.Bind(wx.EVT_RIGHT_UP, self.OnContextMenu)
 

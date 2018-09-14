@@ -87,14 +87,17 @@ class StatsPane(wx.Panel):
             standardFont.SetPointSize(8)
             self.SetFont(standardFont)
 
+        borderSizer = wx.BoxSizer(wx.HORIZONTAL)
         mainSizer = wx.BoxSizer(wx.VERTICAL)
-        self.SetSizer(mainSizer)
+        borderSizer.AddSpacer(8)
+        borderSizer.Add(mainSizer, 0, wx.EXPAND)
+        borderSizer.AddSpacer(8)
+        self.SetSizer(borderSizer)
 
         self.views = []
         self.nameViewMap = {}
-        maxviews = len(self.DEFAULT_VIEWS)
-        i = 0
-        for viewName in self.DEFAULT_VIEWS:
+        viewCount = len(self.DEFAULT_VIEWS)
+        for i,viewName in enumerate(self.DEFAULT_VIEWS):
             tp = TogglePanel(self)
             contentPanel = tp.GetContentPanel()
             contentPanel.viewName = viewName
@@ -118,11 +121,12 @@ class StatsPane(wx.Panel):
             for child in contentPanel.GetChildren():
                 child.Bind(wx.EVT_RIGHT_DOWN, self.contextHandler(contentPanel))
 
-            mainSizer.Add(tp, 0, wx.EXPAND | wx.LEFT, 3)
-            if i < maxviews - 1:
+            mainSizer.Add(tp, 0, wx.EXPAND | wx.LEFT)
+            mainSizer.AddSpacer(4)
+            if i < viewCount - 1:
                 mainSizer.Add(wx.StaticLine(self, wx.ID_ANY, style=wx.HORIZONTAL), 0,
-                              wx.EXPAND | wx.TOP | wx.LEFT | wx.RIGHT, 2)
-            i += 1
+                              wx.EXPAND | wx.TOP | wx.LEFT | wx.RIGHT)
+            mainSizer.AddSpacer(4)
             tp.OnStateChange(tp.GetBestSize())
 
         width, height = self.GetSize()

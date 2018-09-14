@@ -44,7 +44,7 @@ class TargetingMiscViewMinimal(StatsView):
 
         self.panel = contentPanel
         self.headerPanel = headerPanel
-        gridTargetingMisc = wx.FlexGridSizer(1, 3, 0, 0)
+        gridTargetingMisc = wx.FlexGridSizer(1, 3, 1, 1)
         contentSizer.Add(gridTargetingMisc, 0, wx.EXPAND | wx.ALL, 0)
         gridTargetingMisc.AddGrowableCol(0)
         gridTargetingMisc.AddGrowableCol(2)
@@ -62,7 +62,7 @@ class TargetingMiscViewMinimal(StatsView):
                   ("Drone range", "CtrlRange", "km"))
 
         for header, labelShort, unit in labels:
-            gridTargeting.Add(wx.StaticText(contentPanel, wx.ID_ANY, "%s: " % header), 0, wx.ALIGN_LEFT)
+            gridTargeting.Add(wx.StaticText(contentPanel, wx.ID_ANY, "%s " % header), 0, wx.ALIGN_RIGHT)
 
             box = wx.BoxSizer(wx.HORIZONTAL)
             gridTargeting.Add(box, 0, wx.ALIGN_LEFT)
@@ -74,7 +74,8 @@ class TargetingMiscViewMinimal(StatsView):
             self._cachedValues.append({"main": 0})
 
         # Misc
-        gridTargetingMisc.Add(wx.StaticLine(contentPanel, wx.ID_ANY, style=wx.VERTICAL), 0, wx.EXPAND, 3)
+        # gridTargetingMisc.Add(wx.StaticLine(contentPanel, wx.ID_ANY, style=wx.VERTICAL), 0, wx.EXPAND, 3)
+        gridTargetingMisc.AddSpacer(8)
         gridMisc = wx.FlexGridSizer(5, 2, 0, 0)
         gridMisc.AddGrowableCol(1)
         gridTargetingMisc.Add(gridMisc, 0, wx.ALIGN_LEFT | wx.ALL, 5)
@@ -86,7 +87,7 @@ class TargetingMiscViewMinimal(StatsView):
                   ("Cargo", "Cargo", "m\u00B3"))
 
         for header, labelShort, unit in labels:
-            gridMisc.Add(wx.StaticText(contentPanel, wx.ID_ANY, "%s: " % header), 0, wx.ALIGN_LEFT)
+            gridMisc.Add(wx.StaticText(contentPanel, wx.ID_ANY, "%s " % header), 0, wx.ALIGN_RIGHT)
 
             box = wx.BoxSizer(wx.HORIZONTAL)
             gridMisc.Add(box, 0, wx.ALIGN_LEFT)
