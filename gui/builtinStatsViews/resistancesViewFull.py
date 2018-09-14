@@ -123,7 +123,7 @@ class ResistancesViewFull(StatsView):
                 continue
             currGColour = 0
 
-            font = wx.Font(fonts.NORMAL, wx.SWISS, wx.NORMAL, wx.NORMAL, False)
+            font = wx.Font(fonts.NORMAL, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False)
 
             for damageType in ("em", "thermal", "kinetic", "explosive"):
                 box = wx.BoxSizer(wx.HORIZONTAL)
