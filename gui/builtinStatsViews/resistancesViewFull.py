@@ -56,20 +56,15 @@ class ResistancesViewFull(StatsView):
         self.headerPanel = headerPanel
         # Custom header  EHP
         headerContentSizer = wx.BoxSizer(wx.HORIZONTAL)
-        hsizer = headerPanel.GetSizer()
-        hsizer.Add(headerContentSizer, 0, 0, 0)
-        self.stEff = wx.StaticText(headerPanel, wx.ID_ANY, "( Effective HP: ")
+        hsizer : wx.Sizer = headerPanel.GetSizer()
+        hsizer.Add(headerContentSizer, 0, wx.ALIGN_BOTTOM, 0)
+        self.stEff = wx.StaticText(headerPanel, wx.ID_ANY, "(Effective HP: ")
         headerContentSizer.Add(self.stEff)
         headerPanel.GetParent().AddToggleItem(self.stEff)
 
         self.labelEhp = wx.StaticText(headerPanel, wx.ID_ANY, "0")
         headerContentSizer.Add(self.labelEhp, 0)
         headerPanel.GetParent().AddToggleItem(self.labelEhp)
-
-        stCls = wx.StaticText(headerPanel, wx.ID_ANY, " )")
-
-        headerPanel.GetParent().AddToggleItem(stCls)
-        headerContentSizer.Add(stCls)
         #        headerContentSizer.Add(wx.StaticLine(headerPanel, wx.ID_ANY), 1, wx.ALIGN_CENTER)
 
         # Display table
@@ -204,12 +199,12 @@ class ResistancesViewFull(StatsView):
             else:
                 lbl.SetLabel("0")
 
-        self.labelEhp.SetLabel("%s" % formatAmount(total, 3, 0, 9))
+        self.labelEhp.SetLabel("%s)" % formatAmount(total, 3, 0, 9))
         if self.showEffective:
-            self.stEff.SetLabel("( Effective HP: ")
+            self.stEff.SetLabel("(Effective HP: ")
             self.labelEhp.SetToolTip(wx.ToolTip("Effective: %d HP" % total))
         else:
-            self.stEff.SetLabel("( Raw HP: ")
+            self.stEff.SetLabel("(Raw HP: ")
             self.labelEhp.SetToolTip(wx.ToolTip("Raw: %d HP" % total))
 
         damagePattern = fit.damagePattern if fit is not None and self.showEffective else None
