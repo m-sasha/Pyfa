@@ -138,6 +138,9 @@ if __name__ == "__main__":
         mf = MainFrame(options.title)
         ErrorHandler.SetParent(mf)
 
+        from at.setupsFrame import SetupsFrame
+        SetupsFrame.getInstance().Show()
+
         if options.profile_path:
             profile_path = os.path.join(options.profile_path, 'pyfa-{}.profile'.format(datetime.datetime.now().strftime('%Y%m%d_%H%M%S')))
             pyfalog.debug("Starting pyfa with a profiler, saving to {}".format(profile_path))

@@ -96,6 +96,8 @@ import service.esiapi as esiapi
 from service.esi import Esi, LoginMethod
 from gui.esiFittings import EveFittings, ExportToEve, SsoCharacterMgmt
 
+from at.setupsFrame import SetupsFrame
+
 disableOverrideEditor = False
 
 try:
@@ -413,7 +415,9 @@ class MainFrame(wx.Frame):
         event.Skip()
 
     def ExitApp(self, event):
+        SetupsFrame.getInstance().OnAppExit()
         self.Close()
+
         event.Skip()
 
     def ShowAboutBox(self, evt):
