@@ -137,8 +137,8 @@ class FittingView(d.Display):
                     "Capacitor Usage",
                     "Max Range",
                     "Miscellanea",
-                    "Price",
                     "Ammo",
+                    "Price",
                     ]
 
     def __init__(self, parent):
