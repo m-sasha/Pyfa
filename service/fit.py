@@ -316,6 +316,24 @@ class Fit(object):
                 fit.notes))
         return fits
 
+    @staticmethod
+    def getFitByName(name):
+        pyfalog.debug("Searching for fit: {0}", name)
+        results = eos.db.searchFits(name)
+
+        for fit in results:
+            if name == fit.name:
+                return (
+                    fit.ID,
+                    fit.name,
+                    fit.ship.item.ID,
+                    fit.ship.item.name,
+                    fit.booster,
+                    fit.modifiedCoalesce,
+                    fit.notes)
+        return None
+
+
     def addImplant(self, fitID, itemID, recalc=True):
         pyfalog.debug("Adding implant to fit ({0}) for item ID: {1}", fitID, itemID)
         if fitID is None:

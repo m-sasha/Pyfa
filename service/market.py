@@ -758,6 +758,19 @@ class Market(object):
 
         return ships
 
+    def getShipByName(self, name):
+        """Find ship with exactly the given name"""
+        filter_ = types_Category.name.in_(["Ship"])
+        results = eos.db.searchItems(name, where=filter_,
+                                     join=(types_Item.group, types_Group.category),
+                                     eager=("group.category", "metaGroup", "metaGroup.parent"))
+        for item in results:
+            if self.getPublicityByItem(item) and item.name == name:
+                return item
+
+        return None
+
+
     def searchItems(self, name, callback, filterOn=True):
         """Find items according to given text pattern"""
         self.searchWorkerThread.scheduleSearch(name, callback, filterOn)
