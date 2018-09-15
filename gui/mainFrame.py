@@ -325,21 +325,29 @@ class MainFrame(wx.Frame):
         OpenFitsThread(fits, self.closeWaitDialog)
 
     def LoadMainFrameAttribs(self):
-        mainFrameDefaultAttribs = {"wnd_width": 1000, "wnd_height": 700, "wnd_maximized": False, "browser_width": 300,
-                                   "market_height": 0, "fitting_height": -200}
+        mainFrameDefaultAttribs = {"wnd_size": (1000, 700),
+                                   "wnd_position": None,
+                                   "wnd_maximized": False,
+                                   "browser_width": 300,
+                                   "market_height": 0,
+                                   "fitting_height": -200}
         self.mainFrameAttribs = SettingsProvider.getInstance().getSettings("pyfaMainWindowAttribs",
                                                                            mainFrameDefaultAttribs)
-
-        if self.mainFrameAttribs["wnd_maximized"]:
-            width = mainFrameDefaultAttribs["wnd_width"]
-            height = mainFrameDefaultAttribs["wnd_height"]
-            self.Maximize()
+        isMaximized = self.mainFrameAttribs["wnd_maximized"]
+        if isMaximized:
+            size = mainFrameDefaultAttribs["wnd_size"]
         else:
-            width = self.mainFrameAttribs["wnd_width"]
-            height = self.mainFrameAttribs["wnd_height"]
+            size = self.mainFrameAttribs["wnd_size"]
 
-        self.SetSize((width, height))
-        self.SetMinSize((mainFrameDefaultAttribs["wnd_width"], mainFrameDefaultAttribs["wnd_height"]))
+        self.SetSize(size)
+        self.SetMinSize(mainFrameDefaultAttribs["wnd_size"])
+
+        pos = self.mainFrameAttribs["wnd_position"]
+        if pos is not None:
+            self.SetPosition(pos)
+
+        if isMaximized:
+            self.Maximize()
 
         self.browserWidth = self.mainFrameAttribs["browser_width"]
         self.marketHeight = self.mainFrameAttribs["market_height"]
@@ -348,10 +356,9 @@ class MainFrame(wx.Frame):
     def UpdateMainFrameAttribs(self):
         if self.IsIconized():
             return
-        width, height = self.GetSize()
 
-        self.mainFrameAttribs["wnd_width"] = width
-        self.mainFrameAttribs["wnd_height"] = height
+        self.mainFrameAttribs["wnd_size"] = self.GetSize()
+        self.mainFrameAttribs["wnd_position"] = self.GetPosition()
         self.mainFrameAttribs["wnd_maximized"] = self.IsMaximized()
 
         self.mainFrameAttribs["browser_width"] = self.notebookBrowsers.GetSize()[0]
