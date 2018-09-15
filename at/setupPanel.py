@@ -5,24 +5,30 @@ import eos.db
 import at.rules
 from service.fit import Fit
 from service.market import Market
+from gui.utils.numberFormatter import formatAmount
 
 _SHIP_COL = 0
 _FIT_COL = 1
 _POINTS_COL = 2
+_EHP_COL = 3
+_DPS_COL = 4
+_TOTAL_COLS = 5
 
 class SetupPanel(Grid):
 
     def __init__(self, parent):
         Grid.__init__(self, parent)
 
-        self.CreateGrid(0, 3)
+        self.CreateGrid(0, _TOTAL_COLS)
 
         self.SetRowLabelSize(0)  # Hide the index column
         self.EnableGridLines(False)  # Hide grid lines
 
-        self.SetColLabelValue(0, "Ship")
-        self.SetColLabelValue(1, "Fit")
-        self.SetColLabelValue(2, "Points")
+        self.SetColLabelValue(_SHIP_COL, "Ship")
+        self.SetColLabelValue(_FIT_COL, "Fit")
+        self.SetColLabelValue(_POINTS_COL, "Points")
+        self.SetColLabelValue(_EHP_COL, "EHP")
+        self.SetColLabelValue(_DPS_COL, "DPS")
 
         self.Bind(wx.grid.EVT_GRID_CELL_CHANGING, self.onCellChanging)
 
@@ -47,11 +53,16 @@ class SetupPanel(Grid):
         fitId = setupShip.fitId
         fit = sFit.getFit(setupShip.fitId, basic=True) if fitId is not None else None
         self.SetCellValue(row, _SHIP_COL , ship.name)
-        self.SetCellValue(row, _FIT_COL, fit.name if fit is not None else "")
         self.SetCellValue(row, _POINTS_COL, str(at.rules.shipPointValue(ship)))
+        if fit is not None:
+            self.SetCellValue(row, _FIT_COL, fit.name)
+            self.SetCellValue(row, _EHP_COL, formatAmount(fit.totalEHP, 3, 0, 9))
+            self.SetCellValue(row, _DPS_COL, formatAmount(fit.totalDPS, 3, 0, 0))
 
         self.SetReadOnly(row, _POINTS_COL)
         self.SetCellAlignment(row, _POINTS_COL, wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
+        self.SetCellAlignment(row, _EHP_COL, wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
+        self.SetCellAlignment(row, _DPS_COL, wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
 
 
     def _insertAddShipRow(self, row):

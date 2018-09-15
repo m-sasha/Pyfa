@@ -1474,6 +1474,10 @@ class Fit(object):
         return self.__ehp
 
     @property
+    def totalEHP(self):
+        return sum(self.ehp.values())
+
+    @property
     def tank(self):
         hps = {"passiveShield": self.calculateShieldRecharge()}
         for type in ("shield", "armor", "hull"):
