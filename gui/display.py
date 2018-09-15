@@ -56,7 +56,7 @@ class Display(wx.ListCtrl):
                     paramDict[name] = value
                 col = colClass(self, paramDict)
             else:
-                col = ViewColumn.getColumn(colName)(self, None)
+                col = ViewColumn.getColumn(colName)(self, params={"showIcon": False, "displayName": True})
 
             self.addColumn(i, col)
             self.columnsMinWidth.append(self.GetColumnWidth(i))
@@ -66,7 +66,7 @@ class Display(wx.ListCtrl):
         # noinspection PyPropertyAccess
         info.m_mask = wx.LIST_MASK_WIDTH
         self.InsertColumn(i, info)
-        self.SetColumnWidth(i, 0)
+        # self.SetColumnWidth(i, 0)
 
         self.imageListBase = self.imageList.ImageCount
 

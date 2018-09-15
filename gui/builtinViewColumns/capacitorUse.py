@@ -32,12 +32,18 @@ class CapacitorUse(ViewColumn):
 
     def __init__(self, fittingView, params):
         ViewColumn.__init__(self, fittingView)
+        if params is None:
+            params = {"showIcon": True, "displayName": False}
 
         self.mask = wx.LIST_MASK_IMAGE
 
         Attribute.getInstance().getAttributeInfo("capacitorNeed")
-        self.imageId = fittingView.imageList.GetImageIndex("capacitorRecharge_small", "gui")
-        self.bitmap = BitmapLoader.getBitmap("capacitorRecharge_small", "gui")
+        if params["showIcon"]:
+            self.imageId = fittingView.imageList.GetImageIndex("capacitorRecharge_small", "gui")
+            self.bitmap = BitmapLoader.getBitmap("capacitorRecharge_small", "gui")
+        else:
+            self.imageId = -1
+        self.columnText = "Cap"
 
     def getText(self, mod):
         if isinstance(mod, Mode):

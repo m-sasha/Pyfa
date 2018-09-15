@@ -29,9 +29,18 @@ class Ammo(ViewColumn):
 
     def __init__(self, fittingView, params):
         ViewColumn.__init__(self, fittingView)
+
+        if params is None:
+            params = {"showIcon": True, "displayName": False}
+
         self.mask = wx.LIST_MASK_IMAGE
-        self.imageId = fittingView.imageList.GetImageIndex("damagePattern_small", "gui")
-        self.bitmap = BitmapLoader.getBitmap("damagePattern_small", "gui")
+
+        if params["showIcon"]:
+            self.imageId = fittingView.imageList.GetImageIndex("damagePattern_small", "gui")
+            self.bitmap = BitmapLoader.getBitmap("damagePattern_small", "gui")
+        else:
+            self.imageId = -1
+        self.columnText = Ammo.name
 
     def getText(self, stuff):
         if isinstance(stuff, Fighter):

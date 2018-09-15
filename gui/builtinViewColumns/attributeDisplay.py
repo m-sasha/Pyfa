@@ -54,7 +54,7 @@ class AttributeDisplay(ViewColumn):
             self.imageId = -1
 
         if params["displayName"] or self.imageId == -1:
-            self.columnText = info.displayName if info.displayName != "" else info.name
+            self.columnText = AttributeDisplay.columnName(info)
             self.mask |= wx.LIST_MASK_IMAGE
 
         if params["direct"]:
@@ -69,6 +69,17 @@ class AttributeDisplay(ViewColumn):
                 originalRefresh(stuff)
 
             fittingView.refresh = refresh
+
+    @staticmethod
+    def columnName(info):
+        name = info.displayName
+        if name == "Maximum Velocity":
+            return "Speed"
+        elif name == "Powergrid Usage":
+            return "PG"
+        elif name == "CPU usage":
+            return "CPU"
+        return info.displayName if info.displayName != "" else info.name
 
     def getText(self, mod):
         if hasattr(mod, "item"):
@@ -106,8 +117,8 @@ class AttributeDisplay(ViewColumn):
     @staticmethod
     def getParameters():
         return (("attribute", str, None),
-                ("displayName", bool, False),
-                ("showIcon", bool, True),
+                ("displayName", bool, True),
+                ("showIcon", bool, False),
                 ("direct", bool, False))
 
 
