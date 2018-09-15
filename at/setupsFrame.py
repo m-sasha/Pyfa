@@ -1,11 +1,9 @@
 from logbook import Logger
 import wx
-import eos.db
 from service.settings import SettingsProvider
-from wx import ListBox
 from at.setup import Setup, StoredSetups, SetupShip
-import at.rules
-from service.fit import Fit
+from at.setupPanel import SetupPanel
+
 
 
 pyfalog = Logger(__name__)
@@ -38,10 +36,7 @@ class SetupsFrame(wx.Frame):
         if self.setups:
             setupsListBox.InsertItems(list([setup.name for setup in self.setups]), 0)
 
-        setupDisplay = wx.ListCtrl(self, style = wx.LC_REPORT | wx.LC_SINGLE_SEL)
-        setupDisplay.InsertColumn(0, "Ship")
-        setupDisplay.InsertColumn(1, "Fit")
-        setupDisplay.InsertColumn(2, "Points", format=wx.LIST_FORMAT_RIGHT)
+        setupDisplay = SetupPanel(self)
 
         mainSizer.Add(setupsListBox, 0, wx.EXPAND)
         mainSizer.Add(setupDisplay, 1, wx.EXPAND)
@@ -49,7 +44,7 @@ class SetupsFrame(wx.Frame):
         self.SetSizer(mainSizer)
 
         self.setupsListBox = setupsListBox
-        self.setupDisplay = setupDisplay
+        self.setupPanel = setupDisplay
 
         self.Bind(wx.EVT_LISTBOX, self.onSetupSelected, setupsListBox)
 
@@ -64,21 +59,12 @@ class SetupsFrame(wx.Frame):
 
 
     def onSetupSelected(self, event):
-        table = self.setupDisplay
-        table.DeleteAllItems()
         if not event.IsSelection():
             return
 
-        sFit = Fit.getInstance()
         index = event.GetSelection()
         setup = self.setups[index]
-        for i,setupShip in enumerate(setup.ships):
-            ship = eos.db.getItem(setupShip.shipId)
-            fit = sFit.getFit(setupShip.fitId, basic=True)
-
-            table.InsertStringItem(i, ship.name)
-            table.SetStringItem(i, 1, fit.name)
-            table.SetStringItem(i, 2, str(at.rules.shipPointValue(ship)))
+        self.setupPanel.showSetup(setup)
 
 
     def LoadFrameAttribs(self):
