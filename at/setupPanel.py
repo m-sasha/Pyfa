@@ -6,6 +6,9 @@ import at.rules
 from service.fit import Fit
 from service.market import Market
 from gui.utils.numberFormatter import formatAmount
+import gui.mainFrame
+import gui.globalEvents as GE
+
 
 _SHIP_COL = 0
 _FIT_COL = 1
@@ -33,8 +36,11 @@ class SetupPanel(Grid):
         self.SetColLabelValue(_DPS_COL, "DPS")
 
         self.Bind(wx.grid.EVT_GRID_CELL_CHANGING, self.onCellChanging)
+        mainFrame = gui.mainFrame.MainFrame.getInstance()
+        mainFrame.Bind(GE.FIT_CHANGED, self._onFitChanged)
 
-        self.setup : Setup = None
+
+        self._setup : Setup = None
 
     def showSetup(self, setup : Setup):
         rowCount = self.GetNumberRows()
@@ -47,7 +53,7 @@ class SetupPanel(Grid):
             self._updateShipRow(i, setupShip)
         self._insertAddShipRow(shipCount)
 
-        self.setup = setup
+        self._setup = setup
 
     def _updateShipRow(self, row, setupShip: SetupShip):
         sFit = Fit.getInstance()
@@ -77,7 +83,7 @@ class SetupPanel(Grid):
     def onCellChanging(self, event: wx.grid.GridEvent):
         col = event.GetCol()
         if col == _SHIP_COL:
-            if event.GetRow() == len(self.setup.ships):  # <Add Ship>
+            if event.GetRow() == len(self._setup.ships):  # <Add Ship>
                 self._onAddShip(event)
             else:
                 self._onShipChanging(event)
@@ -95,7 +101,7 @@ class SetupPanel(Grid):
             return
 
         ship = SetupShip(newShip.typeID)
-        self.setup.ships.append(ship)
+        self._setup.ships.append(ship)
         self._updateShipRow(event.GetRow(), ship)
         self._insertAddShipRow(event.GetRow()+1)
 
@@ -111,7 +117,7 @@ class SetupPanel(Grid):
             event.Veto()
             return
 
-        ship = self.setup.ships[event.GetRow()]
+        ship = self._setup.ships[event.GetRow()]
         ship.shipId = newShip.typeID
         ship.fitId = None
         self._updateShipRow(event.GetRow(), ship)
@@ -125,10 +131,26 @@ class SetupPanel(Grid):
             return
 
         fitId, shipId = fit[0], fit[2]
-        ship = self.setup.ships[event.GetRow()]
+        ship = self._setup.ships[event.GetRow()]
         if ship.shipId != shipId:
             event.Veto()
             return
 
         ship.fitId = fitId
         self._updateShipRow(event.GetRow(), ship)
+
+
+    def _rowOfFit(self, fitId):
+        for i,ship in enumerate(self._setup.ships):
+            if fitId == ship.fitId:
+                return i
+        return None
+
+
+    def _onFitChanged(self, event):
+        row = self._rowOfFit(event.fitID)
+        if row is None:
+            return
+
+        self._updateShipRow(row, self._setup.ships[row])
+        event.Skip()
