@@ -23,6 +23,8 @@ class SetupPanel(Grid):
 
         self.SetRowLabelSize(0)  # Hide the index column
         self.EnableGridLines(False)  # Hide grid lines
+        self.DisableDragGridSize()  # Disable resizing of rows/columns by dragging
+        self.DisableDragColMove() # Disable reordering of columns by dragging
 
         self.SetColLabelValue(_SHIP_COL, "Ship")
         self.SetColLabelValue(_FIT_COL, "Fit")

@@ -17,6 +17,8 @@ class SetupsList(Grid):
         self.SetRowLabelSize(0)  # Hide the index column
         self.SetColLabelSize(0)  # Hide the column names
         self.EnableGridLines(False)  # Hide grid lines
+        self.DisableDragGridSize()  # Disable resizing of rows/columns by dragging
+        self.DisableDragColMove() # Disable reordering of columns by dragging
         self.SetColSize(0, size[0])
 
         self.Bind(wx.grid.EVT_GRID_SELECT_CELL, self._onCellSelected)
