@@ -59,7 +59,7 @@ class SetupPanel(Grid):
         sFit = Fit.getInstance()
         ship = eos.db.getItem(setupShip.shipId)
         fitId = setupShip.fitId
-        fit = sFit.getFit(setupShip.fitId, basic=True) if fitId is not None else None
+        fit = sFit.getFit(setupShip.fitId, basic=False) if fitId is not None else None
         self.SetCellValue(row, _SHIP_COL , ship.name)
         self.SetCellValue(row, _POINTS_COL, str(at.rules.shipPointValue(ship)))
         if fit is not None:
@@ -88,7 +88,7 @@ class SetupPanel(Grid):
             else:
                 self._onShipChanging(event)
         elif col == _FIT_COL:
-            self._onFitChanging(event)
+            self._onChoosingFit(event)
 
 
     def _onAddShip(self, event: wx.grid.GridEvent):
@@ -123,7 +123,7 @@ class SetupPanel(Grid):
         self._updateShipRow(event.GetRow(), ship)
 
 
-    def _onFitChanging(self, event):
+    def _onChoosingFit(self, event):
         name = event.GetString()
         fit = Fit.getInstance().getFitByName(name)
         if fit is None:
