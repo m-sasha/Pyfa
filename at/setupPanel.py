@@ -8,6 +8,7 @@ from service.market import Market
 from gui.utils.numberFormatter import formatAmount
 import gui.mainFrame
 import gui.globalEvents as GE
+from gui.builtinShipBrowser.events import FitSelected
 
 
 _SHIP_COL = 0
@@ -28,6 +29,7 @@ class SetupPanel(Grid):
         self.EnableGridLines(False)  # Hide grid lines
         self.DisableDragGridSize()  # Disable resizing of rows/columns by dragging
         self.DisableDragColMove() # Disable reordering of columns by dragging
+        self.SetSelectionMode(wx.grid.Grid.SelectRows)
 
         self.SetColLabelValue(_SHIP_COL, "Ship")
         self.SetColLabelValue(_FIT_COL, "Fit")
@@ -36,8 +38,8 @@ class SetupPanel(Grid):
         self.SetColLabelValue(_DPS_COL, "DPS")
 
         self.Bind(wx.grid.EVT_GRID_CELL_CHANGING, self.onCellChanging)
-        mainFrame = gui.mainFrame.MainFrame.getInstance()
-        mainFrame.Bind(GE.FIT_CHANGED, self._onFitChanged)
+        gui.mainFrame.MainFrame.getInstance().Bind(GE.FIT_CHANGED, self._onFitChanged)
+        self.Bind(wx.grid.EVT_GRID_CELL_RIGHT_CLICK, self._showContextMenu)
 
 
         self._setup : Setup = None
@@ -123,7 +125,7 @@ class SetupPanel(Grid):
         self._updateShipRow(event.GetRow(), ship)
 
 
-    def _onChoosingFit(self, event):
+    def _onChoosingFit(self, event: wx.grid.GridEvent):
         name = event.GetString()
         fit = Fit.getInstance().getFitByName(name)
         if fit is None:
@@ -154,3 +156,38 @@ class SetupPanel(Grid):
 
         self._updateShipRow(row, self._setup.ships[row])
         event.Skip()
+
+
+    def _showContextMenu(self, event: wx.grid.GridEvent):
+        row = event.GetRow()
+        if row >= len(self._setup.ships):
+            return
+
+        self.SelectRow(row)
+        fitId = self._setup.ships[row].fitId
+
+        if not hasattr(self, "openFitId"):
+            self.openFitId = wx.NewId()
+            self.deleteFitId = wx.NewId()
+
+        menu = wx.Menu()
+
+        openFitItem : wx.MenuItem = menu.Append(self.openFitId, "Open Fit")
+        self.Bind(wx.EVT_MENU, lambda _ : self._onOpenFit(fitId), openFitItem)
+
+        removeFromSetupItem : wx.MenuItem = menu.Append(self.deleteFitId, "Remove From Setup")
+        self.Bind(wx.EVT_MENU, lambda _ : self._onRemoveFitFromSetup(fitId), removeFromSetupItem)
+
+        self.PopupMenu(menu)
+        menu.Destroy()
+
+
+    @staticmethod
+    def _onOpenFit(fitId):
+        mainFrame = gui.mainFrame.MainFrame.getInstance()
+        if not fitId is None:
+            wx.PostEvent(mainFrame, FitSelected(fitID=fitId))
+
+
+    def _onRemoveFitFromSetup(self, event):
+        pass
