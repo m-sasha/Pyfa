@@ -172,12 +172,16 @@ class SetupPanel(Grid):
 
         if not hasattr(self, "openFitId"):
             self.openFitId = wx.NewId()
+            self.openFitInNewTabId = wx.NewId()
             self.deleteFitId = wx.NewId()
 
         menu = wx.Menu()
 
         openFitItem : wx.MenuItem = menu.Append(self.openFitId, "Open Fit")
-        self.Bind(wx.EVT_MENU, lambda _ : self._onOpenFit(fitId), openFitItem)
+        self.Bind(wx.EVT_MENU, lambda _ : self._onOpenFit(fitId, False), openFitItem)
+
+        openFitInNewTabItem: wx.MenuItem = menu.Append(self.openFitInNewTabId, "Open Fit In New Tab");
+        self.Bind(wx.EVT_MENU, lambda _: self._onOpenFit(fitId, True), openFitInNewTabItem)
 
         removeFromSetupItem : wx.MenuItem = menu.Append(self.deleteFitId, "Remove From Setup")
         self.Bind(wx.EVT_MENU, lambda _ : self._onRemoveFitFromSetup(fitId), removeFromSetupItem)
@@ -187,10 +191,13 @@ class SetupPanel(Grid):
 
 
     @staticmethod
-    def _onOpenFit(fitId):
+    def _onOpenFit(fitId, inNewTab):
         mainFrame = gui.mainFrame.MainFrame.getInstance()
         if not fitId is None:
-            wx.PostEvent(mainFrame, FitSelected(fitID=fitId))
+            if inNewTab:
+                wx.PostEvent(mainFrame, FitSelected(fitID=fitId, startup=2))
+            else:
+                wx.PostEvent(mainFrame, FitSelected(fitID=fitId))
 
 
     def _onRemoveFitFromSetup(self, event):
