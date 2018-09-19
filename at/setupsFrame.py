@@ -1,8 +1,9 @@
 from logbook import Logger
 import wx
 from service.settings import SettingsProvider
-from at.setup import Setup, StoredSetups, SetupShip
+from at.setup import StoredSetups
 from at.setupPanel import SetupPanel
+from at.setupsList import SetupsList
 
 
 
@@ -32,21 +33,19 @@ class SetupsFrame(wx.Frame):
         # Create the UI
         mainSizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        setupsListBox = wx.ListBox(self, size = (200,-1), style = wx.LB_SINGLE)
-        if self.setups:
-            setupsListBox.InsertItems(list([setup.name for setup in self.setups]), 0)
+        setupsList = SetupsList(self, self)
+        setupPanel = SetupPanel(self)
 
-        setupDisplay = SetupPanel(self)
-
-        mainSizer.Add(setupsListBox, 0, wx.EXPAND)
-        mainSizer.Add(setupDisplay, 1, wx.EXPAND)
+        mainSizer.Add(setupsList, 0, wx.EXPAND)
+        mainSizer.Add(setupPanel, 1, wx.EXPAND)
 
         self.SetSizer(mainSizer)
 
-        self.setupsListBox = setupsListBox
-        self.setupPanel = setupDisplay
+        self.setupsList = setupsList
+        self.setupPanel = setupPanel
 
-        self.Bind(wx.EVT_LISTBOX, self.onSetupSelected, setupsListBox)
+        if self.setups:
+            setupsList.showSetups(self.setups)
 
         # from service.fit import Fit
         # sFit = Fit.getInstance()
@@ -58,11 +57,7 @@ class SetupsFrame(wx.Frame):
         # StoredSetups.addSetup(setup)
 
 
-    def onSetupSelected(self, event):
-        if not event.IsSelection():
-            return
-
-        index = event.GetSelection()
+    def onSetupSelected(self, index):
         setup = self.setups[index]
         self.setupPanel.showSetup(setup)
 
