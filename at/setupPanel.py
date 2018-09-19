@@ -29,7 +29,8 @@ class SetupPanel(Grid):
         self.EnableGridLines(False)  # Hide grid lines
         self.DisableDragGridSize()  # Disable resizing of rows/columns by dragging
         self.DisableDragColMove() # Disable reordering of columns by dragging
-        self.SetSelectionMode(wx.grid.Grid.SelectRows)
+        self.SetCellHighlightPenWidth(0)  # Disable the highlight around the "current" cell
+        self.SetSelectionMode(wx.grid.Grid.SelectRows)  # Select the entire row
 
         self.SetColLabelValue(_SHIP_COL, "Ship")
         self.SetColLabelValue(_FIT_COL, "Fit")
@@ -70,6 +71,9 @@ class SetupPanel(Grid):
             self.SetCellValue(row, _DPS_COL, formatAmount(fit.totalDPS, 3, 0, 0))
 
         self.SetReadOnly(row, _POINTS_COL)
+        self.SetReadOnly(row, _EHP_COL)
+        self.SetReadOnly(row, _DPS_COL)
+
         self.SetCellAlignment(row, _POINTS_COL, wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
         self.SetCellAlignment(row, _EHP_COL, wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
         self.SetCellAlignment(row, _DPS_COL, wx.ALIGN_RIGHT, wx.ALIGN_CENTER)

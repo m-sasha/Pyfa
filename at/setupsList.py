@@ -19,6 +19,8 @@ class SetupsList(Grid):
         self.EnableGridLines(False)  # Hide grid lines
         self.DisableDragGridSize()  # Disable resizing of rows/columns by dragging
         self.DisableDragColMove() # Disable reordering of columns by dragging
+        self.SetCellHighlightPenWidth(0)  # Disable the highlight around the "current" cell
+        self.SetSelectionMode(wx.grid.Grid.SelectRows)  # Select the entire row
         self.SetColSize(0, size[0])
 
         self.Bind(wx.grid.EVT_GRID_SELECT_CELL, self._onCellSelected)
@@ -45,7 +47,7 @@ class SetupsList(Grid):
 
     def _insertAddSetupRow(self, row):
         self.AppendRows()
-        self.SetCellValue(row, 0, "<Add Setup>")
+        self.SetCellValue(row, 0, "<New Setup>")
 
 
     def _onCellSelected(self, event: wx.grid.GridEvent):
