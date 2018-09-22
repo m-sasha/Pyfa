@@ -674,7 +674,7 @@ class Market(object):
         if mg.hasTypes and not self.marketGroupHasTypesCheck(mg):
             return False
         else:
-            return True
+            return at.rules.isMarketGroupAllowed(mg)
 
     def getIconByMarketGroup(self, mg):
         """Return icon associated to marketgroup"""
@@ -726,7 +726,8 @@ class Market(object):
         root = set()
         for id_ in self.ROOT_MARKET_GROUPS:
             mg = self.getMarketGroup(id_)
-            root.add(mg)
+            if at.rules.isMarketGroupAllowed(mg):
+                root.add(mg)
 
         return root
 

@@ -214,13 +214,17 @@ _disallowedModuleMarketGroups = {
     "Micro Jump Field Generators",
     "Cloaking Devices",
     "Interdiction Sphere Launchers",
-    "Clone Vat Bays"
+    "Clone Vat Bays",
     "Cynosural Field Generators",
     "Jump Portal Generators",
     "Scriptable Armor Hardeners",
     "Scriptable Shield Hardeners",
     "Superweapons",
+    "Burst Projectors",
+    "Projected ECCM",
     "Siege Modules", # Includes Bastion
+    "25000mm Armor Plate",
+    "XL Launchers",
 
     # Useless
     "Jump Economizers",
@@ -233,17 +237,30 @@ _disallowedModuleMarketGroups = {
     "Scanning Upgrades",
     "Survey Probe Launchers",
     "Survey Scanners",
-
+    "Scanning Rigs",
+    "Resource Processing Rigs",
+    "Warp Core Stabilizers"
 }
 
 
-def _isInMarketGroup(item: eos.gamedata.Item, groupName):
-    itemGroup = item.marketGroup
-    while itemGroup is not None:
-        if itemGroup.name == groupName:
+# Some items don't have a market group, or any other attribute except for their name, by which we can tell them apart
+# from allowed (or useful) modules
+_disallowedModuleNamePrefixes = {
+    "Mining Foreman Link"
+}
+
+
+def _isUnderMarketGroup(group: eos.gamedata.MarketGroup, groupName):
+    while group is not None:
+        if group.name == groupName:
             return True
-        itemGroup = itemGroup.parent
+        group = group.parent
     return False
+
+
+
+def _isInMarketGroup(item: eos.gamedata.Item, groupName):
+    return _isUnderMarketGroup(item.marketGroup, groupName)
 
 
 def _isInAnyMarketGroup(item: eos.gamedata.Item, groupNames):
@@ -288,6 +305,8 @@ def isModuleAllowed(module: eos.gamedata.Item):
         return False
     elif _isInMarketGroup(module, "Rigs") and (isTech2(module) or isCapitalRig(module)):
         return False
+    elif any(module.name.startswith(prefix) for prefix in _disallowedModuleNamePrefixes):
+        return False
     elif not fitsOnLegalShips(module):
         return False
     return True
@@ -318,34 +337,26 @@ _ammoMarketGroupNames = {
 
 
 def _isAmmo(charge: eos.gamedata.Item):
-    return any(_isInMarketGroup(charge, marketGroup) for marketGroup in _ammoMarketGroupNames)
+    return _isInAnyMarketGroup(charge, _ammoMarketGroupNames)
 
 
 # Unfortunately, there is no item property that we can use to tell pirate ammo apart from regular faction ammo
-_disallowedAmmoSubstrings = {
+_disallowedAmmoNamePrefixes = {
     "Arch Angel",
     "Domination",
     "Sanshas",
+    "True Sanshas",
     "Blood",
+    "Dark Blood",
     "Shadow",
     "Guardian",
-    "Guristas"
-}
-
-
-# For some reason missiles don't have a "chargeSize" attribute, like turret ammo does
-_capitalOrStructureMissileMarketGroups = {
-    "Structure Antisubcapital Missiles",
-    "Structure Anticapital Missiles",
-    "XL Cruise Missiles",
-    "XL Torpedoes"
+    "Guristas",
+    "Dread Guristas"
 }
 
 
 def _isCapitalOrStructureAmmo(ammo: eos.gamedata.Item):
-    if _isInAnyMarketGroup(ammo, _capitalOrStructureMissileMarketGroups):
-        return True
-    elif "chargeSize" in ammo.attributes:
+    if "chargeSize" in ammo.attributes:
         return ammo.attributes["chargeSize"].value > 3
     else:
         return False
@@ -354,7 +365,7 @@ def _isCapitalOrStructureAmmo(ammo: eos.gamedata.Item):
 def isAmmoAllowed(ammo: eos.gamedata.Item):
     if _isCapitalOrStructureAmmo(ammo):
         return False
-    elif any(substring in ammo.name for substring in _disallowedAmmoSubstrings):
+    elif any(ammo.name.startswith(prefix) for prefix in _disallowedAmmoNamePrefixes):
         return False
     return True
 
@@ -362,7 +373,24 @@ def isAmmoAllowed(ammo: eos.gamedata.Item):
 _disallowedChargeMarketGroups = {
     "Mining Crystals",
     "Probes",
-    "Structure Guided Bombs"
+    "Structure Guided Bombs",
+    "Orbital Strike",
+    "Structure Anticapital Missiles",
+    "Structure Antisubcapital Missiles",
+    "XL Cruise Missiles",
+    "XL Torpedoes",
+    "Mining Foreman Burst Charges", # Useless
+
+    # These are allowed and not entirely useless, but who would ever choose them over navy ammo?
+    "Standard Crystals",
+    "Standard Charges", # Hybrid
+    "Standard Ammo", # Projectile
+    "Standard Cruise Missiles",
+    "Standard Heavy Assault Missiles",
+    "Standard Heavy Missiles",
+    "Standard Light Missiles",
+    "Standard Rockets",
+    "Standard Torpedoes",
 }
 
 def isChargeAllowed(charge: eos.gamedata.Item):
@@ -375,12 +403,16 @@ def isChargeAllowed(charge: eos.gamedata.Item):
         return isScriptAllowed(charge)
     elif _isAmmo(charge):
         return isAmmoAllowed(charge)
+    elif marketGroup.name == "Cap Booster Charges":
+        return charge.metaGroup is not None # This filters out t1 cap boosters, because who would ever use them over navy?
+
     return True
 
 
 _disallowedDroneMarketGroups = {
     "Mining Drones",
-    "Salvage Drones"
+    "Salvage Drones",
+    "Fighters"
 }
 
 def isDroneAllowed(drone: eos.gamedata.Item):
@@ -400,6 +432,8 @@ _disallowedImplantMarketGroups = {
     "Resource Processing Implants",
     "Scanning Implants",
     "Science Implants",
+    "Neural Enhancement Implants",
+    "Faction Omega Implants"
 }
 
 
@@ -416,8 +450,10 @@ def isImplantAllowed(implant: eos.gamedata.Item):
 
 _disallowedItemCategories = {
     "Structure",
-    "Fighter",
     "Structure Module",
+    "Fighter",
+    "Deployable",
+
 }
 
 
@@ -443,3 +479,31 @@ def isGroupAllowed(group: eos.gamedata.Group):
     if categoryName == "Ship":
         return isShipGroupAllowed(group)
     return False
+
+
+_disallowedToplevelMarketGroups = {
+    "Deployable Structures",
+    "Structure Equipment",
+    "Structure Modifications",
+}
+
+_disallowedMarketGroups = set().union(
+    _disallowedImplantMarketGroups,
+    _disallowedDroneMarketGroups,
+    _disallowedChargeMarketGroups,
+    _disallowedModuleMarketGroups,
+    _disallowedToplevelMarketGroups,
+)
+
+def isMarketGroupAllowed(group: eos.gamedata.MarketGroup):
+    if group.name in _disallowedMarketGroups:
+        return False
+    elif group.name == "Capital":
+        return False
+    elif (group.name == "Extra Large") and _isUnderMarketGroup(group, "Ammunition & Charges"):
+        return False
+    elif (group.name == "Extra Large") and _isUnderMarketGroup(group, "Turrets & Bays"):
+        return False
+    elif (group.name.startswith("Capital")) and _isUnderMarketGroup(group, "Rigs"):
+        return False
+    return True
