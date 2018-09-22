@@ -349,6 +349,28 @@ def isDroneAllowed(drone: eos.gamedata.Item):
     return True
 
 
+_disallowedImplantMarketGroups = {
+    "Attribute Enhancers",
+    "Booster",
+    "Cerebral Accelerators",
+    "Industry Implants",
+    "Resource Processing Implants",
+    "Scanning Implants",
+    "Science Implants",
+}
+
+
+def isImplantAllowed(implant: eos.gamedata.Item):
+    if _isInAnyMarketGroup(implant, _disallowedImplantMarketGroups):
+        return False
+    elif implant.group.name == "Booster":  # Cerebral accelerators don't have a market group for some reason
+        return False
+    elif implant.group.name == "Cyber Leadership":
+        return True
+    else:
+        return implant.name[-1] in {"1", "2", "3"}
+
+
 _disallowedItemCategories = {
     "Structure",
     "Fighter",
@@ -367,6 +389,8 @@ def isItemAllowed(item: eos.gamedata.Item):
         return isChargeAllowed(item)
     elif categoryName == "Drone":
         return isDroneAllowed(item)
+    elif categoryName == "Implant":
+        return isImplantAllowed(item)
     return True
 
 
