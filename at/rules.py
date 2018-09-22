@@ -44,44 +44,46 @@ SUNESIS = 1
 ROOKIE_SHIP = 1
 
 
+_allowedShipGroups = {
+    'Combat Recon Ship',
+    'Frigate',
+    'Cruiser',
+    'Battleship',
+    'Industrial',
+    'Command Ship',
+    'Interdictor',
+    'Tactical Destroyer',
+    'Combat Battlecruiser',
+    'Destroyer',
+    'Attack Battlecruiser',
+    'Covert Ops',
+    'Interceptor',
+    'Logistics',
+    'Force Recon Ship',
+    'Stealth Bomber',
+    'Strategic Cruiser',
+    'Assault Frigate',
+    'Black Ops',
+    'Heavy Assault Cruiser',
+    'Logistics Frigate',
+    'Electronic Attack Ship',
+    'Heavy Interdiction Cruiser',
+    'Limited Issue Ships',
+    'Command Destroyer',
+    'Marauder'
+}
+
+
 def isShipGroupAllowed(group: eos.gamedata.Group):
-    # noinspection PyUnresolvedReferences
-    return group.name in {
-        'Combat Recon Ship',
-        'Frigate',
-        'Cruiser',
-        'Battleship',
-        'Industrial',
-        'Command Ship',
-        'Interdictor',
-        'Tactical Destroyer',
-        'Combat Battlecruiser',
-        'Destroyer',
-        'Attack Battlecruiser',
-        'Covert Ops',
-        'Interceptor',
-        'Logistics',
-        'Force Recon Ship',
-        'Stealth Bomber',
-        'Strategic Cruiser',
-        'Assault Frigate',
-        'Black Ops',
-        'Heavy Assault Cruiser',
-        'Logistics Frigate',
-        'Electronic Attack Ship',
-        'Heavy Interdiction Cruiser',
-        'Limited Issue Ships',
-        'Command Destroyer',
-        'Marauder'
-    }
+    return group.name in _allowedShipGroups
 
 
-disallowedShips = {
+_disallowedShips = {
     "Nestor", "Marshal", "Enforcer", "Pacifier", "Monitor"
 }
 
 
-exceptionalShipPointValues = [
+_exceptionalShipPointValues = [
     ({"Bantam", "Burst", "Inquisitor", "Navitas"},  T1_SUPPORT_FRIGATE),
     ({"Griffin", "Vigil", "Crucifier", "Maulus"}, T1_DISRUPTION_FRIGATE),
     ({"Scythe", "Augoror", "Osprey", "Exequror"}, T1_SUPPORT_CRUISER),
@@ -95,7 +97,7 @@ exceptionalShipPointValues = [
 ]
 
 
-pointValuesByMarketGroupName = {
+_pointValuesByMarketGroupName = {
     "Ships": {
         "Frigates": {
             "Standard Frigates": FRIGATE,
@@ -174,24 +176,26 @@ pointValuesByMarketGroupName = {
 }
 
 
-# noinspection PyUnresolvedReferences
 def shipPointValue(ship: eos.gamedata.Item):
     shipName = ship.name
 
-    if shipName in disallowedShips:
+    if shipName in _disallowedShips:
         return None
 
-    for names,value in exceptionalShipPointValues:
+    for names,value in _exceptionalShipPointValues:
         if shipName in names:
             return value
 
+    # List all the market groups of the ship, from most specific to least specific
     marketGroup = ship.marketGroup
     marketGroups = []
     while not (marketGroup is None):
         marketGroups.append(marketGroup)
         marketGroup = marketGroup.parent
 
-    value = pointValuesByMarketGroupName
+    # Walk the ships market groups, from least specific, to most specific, until _pointValuesByMarketGroupName defines
+    # a specific point value for it, or we find nothing
+    value = _pointValuesByMarketGroupName
     for marketGroup in reversed(marketGroups):
         value = value.get(marketGroup.name, None)
         if (value is None) or isinstance(value, int):
@@ -199,15 +203,142 @@ def shipPointValue(ship: eos.gamedata.Item):
 
 
 def isShipAllowed(ship: eos.gamedata.Item):
-    # noinspection PyUnresolvedReferences
-    return (ship.category.name == "Ship") and (not shipPointValue(ship) is None)
+    return shipPointValue(ship) is not None
+
+
+_disallowedModules = {
+    "Micro Jump Field Generator",
+    "Bastion Module I",
+    "Target Spectrum Breaker",
+}
+
+
+_disallowedModuleGroups = {
+    "Cloaking Device"
+}
+
+
+def _isInMarketGroup(item: eos.gamedata.Item, groupName):
+    itemGroup = item.marketGroup
+    while itemGroup is not None:
+        if itemGroup.name == groupName:
+            return True
+        itemGroup = itemGroup.parent
+    return False
+
+
+def isTech2(item: eos.gamedata.Item):
+    metaGroup = item.metaGroup
+    return (metaGroup is not None) and (metaGroup.name == "Tech II")
+
+
+def isCapitalRig(rig: eos.gamedata.Item):
+    return rig.attributes["rigSize"].value > 3
+
+
+def isModuleAllowed(module: eos.gamedata.Item):
+    if module.name in _disallowedModules:
+        return False
+    elif module.group.groupName in _disallowedModuleGroups:
+        return False
+    elif _isInMarketGroup(module, "Rigs") and (isTech2(module) or isCapitalRig(module)):
+        return False
+    return True
+
+
+_disallowedScriptGroups = {
+    'Tracking Disruption Script',
+    'Sensor Dampener Script',
+    'Guidance Disruption Script',
+    'Structure ECM script',
+    'Flex Armor Hardener Script',
+    'Flex Shield Hardener Script',
+    'Structure Warp Disruptor Script',
+}
+
+
+def isScriptAllowed(script: eos.gamedata.Item):
+    return script.group.name not in _disallowedScriptGroups
+
+
+_ammoMarketGroupNames = {
+    'Hybrid Charges',
+    'Projectile Ammo',
+    'Frequency Crystals',
+    'Missiles',
+    'Exotic Plasma Charges',
+}
+
+
+def _isAmmo(charge: eos.gamedata.Item):
+    return any(_isInMarketGroup(charge, marketGroup) for marketGroup in _ammoMarketGroupNames)
+
+
+# Unfortunately, there is no item property that we can use to tell pirate ammo apart from regular faction ammo
+_disallowedAmmoSubstrings = {
+    "Arch Angel",
+    "Domination",
+    "Sanshas",
+    "Blood",
+    "Shadow",
+    "Guardian",
+    "Guristas"
+}
+
+
+# For some reason missiles don't have a "chargeSize" attribute, like turret ammo does
+_capitalOrStructureMissileMarketGroups = {
+    "Structure Antisubcapital Missiles",
+    "Structure Anticapital Missiles",
+    "XL Cruise Missiles",
+    "XL Torpedoes"
+}
+
+
+def _isCapitalOrStructureAmmo(ammo: eos.gamedata.Item):
+    if any(_isInMarketGroup(ammo, marketGroup) for marketGroup in _capitalOrStructureMissileMarketGroups):
+        return True
+    elif "chargeSize" in ammo.attributes:
+        return ammo.attributes["chargeSize"].value > 3
+    else:
+        return False
+
+
+def isAmmoAllowed(ammo: eos.gamedata.Item):
+    if _isCapitalOrStructureAmmo(ammo):
+        return False
+    elif any(substring in ammo.name for substring in _disallowedAmmoSubstrings):
+        return False
+    return True
+
+
+_disallowedChargeMarketGroups = {
+    "Mining Crystals",
+    "Probes",
+    "Structure Guided Bombs"
+}
+
+def isChargeAllowed(charge: eos.gamedata.Item):
+    marketGroup = charge.marketGroup
+    if marketGroup is None:  # WTF? The "Civilian Scourge Light Missile" has no market group (and no other types of civilian missiles)
+        return False
+    elif any(_isInMarketGroup(charge, marketGroup) for marketGroup in _disallowedChargeMarketGroups):
+        return False
+    elif marketGroup.name == "Scripts":
+        return isScriptAllowed(charge)
+    elif _isAmmo(charge):
+        return isAmmoAllowed(charge)
+    return True
 
 
 def isItemAllowed(item: eos.gamedata.Item):
-    # noinspection PyUnresolvedReferences
     categoryName = item.category.name
     if categoryName == "Ship":
         return isShipAllowed(item)
+    elif categoryName == "Module":
+        return isModuleAllowed(item)
+    elif categoryName == "Charge":
+        return isChargeAllowed(item)
     elif categoryName == "Structure":
         return False
     else:
@@ -215,7 +346,6 @@ def isItemAllowed(item: eos.gamedata.Item):
 
 
 def isGroupAllowed(group: eos.gamedata.Group):
-    # noinspection PyUnresolvedReferences
     categoryName = group.category.name
     if categoryName == "Ship":
         return isShipGroupAllowed(group)
