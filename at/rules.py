@@ -227,6 +227,10 @@ def _isInMarketGroup(item: eos.gamedata.Item, groupName):
     return False
 
 
+def _isInAnyMarketGroup(item: eos.gamedata.Item, groupNames):
+    return any(_isInMarketGroup(item, marketGroup) for marketGroup in groupNames)
+
+
 def isTech2(item: eos.gamedata.Item):
     metaGroup = item.metaGroup
     return (metaGroup is not None) and (metaGroup.name == "Tech II")
@@ -296,7 +300,7 @@ _capitalOrStructureMissileMarketGroups = {
 
 
 def _isCapitalOrStructureAmmo(ammo: eos.gamedata.Item):
-    if any(_isInMarketGroup(ammo, marketGroup) for marketGroup in _capitalOrStructureMissileMarketGroups):
+    if _isInAnyMarketGroup(ammo, _capitalOrStructureMissileMarketGroups):
         return True
     elif "chargeSize" in ammo.attributes:
         return ammo.attributes["chargeSize"].value > 3
@@ -322,7 +326,7 @@ def isChargeAllowed(charge: eos.gamedata.Item):
     marketGroup = charge.marketGroup
     if marketGroup is None:  # WTF? The "Civilian Scourge Light Missile" has no market group (and no other types of civilian missiles)
         return False
-    elif any(_isInMarketGroup(charge, marketGroup) for marketGroup in _disallowedChargeMarketGroups):
+    elif _isInAnyMarketGroup(charge, _disallowedChargeMarketGroups):
         return False
     elif marketGroup.name == "Scripts":
         return isScriptAllowed(charge)
@@ -331,23 +335,43 @@ def isChargeAllowed(charge: eos.gamedata.Item):
     return True
 
 
+_disallowedDroneMarketGroups = {
+    "Mining Drones",
+    "Salvage Drones"
+}
+
+def isDroneAllowed(drone: eos.gamedata.Item):
+    metaGroup = drone.metaGroup
+    if metaGroup is not None:
+        return False
+    elif _isInAnyMarketGroup(drone, _disallowedDroneMarketGroups):
+        return False
+    return True
+
+
+_disallowedItemCategories = {
+    "Structure",
+    "Fighter",
+}
+
+
 def isItemAllowed(item: eos.gamedata.Item):
     categoryName = item.category.name
+    if categoryName in _disallowedItemCategories:
+        return False
     if categoryName == "Ship":
         return isShipAllowed(item)
     elif categoryName == "Module":
         return isModuleAllowed(item)
     elif categoryName == "Charge":
         return isChargeAllowed(item)
-    elif categoryName == "Structure":
-        return False
-    else:
-        return True
+    elif categoryName == "Drone":
+        return isDroneAllowed(item)
+    return True
 
 
 def isGroupAllowed(group: eos.gamedata.Group):
     categoryName = group.category.name
     if categoryName == "Ship":
         return isShipGroupAllowed(group)
-    else:
-        return False
+    return False
