@@ -21,6 +21,7 @@ import re
 import threading
 from logbook import Logger
 import queue
+import sys
 from itertools import chain
 
 # noinspection PyPackageRequirements
@@ -93,9 +94,12 @@ class SearchWorkerThread(threading.Thread):
         self.jargonLoader.get_jargon().apply('test string')
 
     def run(self):
-        self.cv = threading.Condition()
-        self.searchRequest = None
-        self.processSearches()
+        try:
+            self.cv = threading.Condition()
+            self.searchRequest = None
+            self.processSearches()
+        except:
+            sys.excepthook(*sys.exc_info())
 
     def processSearches(self):
         cv = self.cv
