@@ -1,4 +1,5 @@
 import eos.gamedata
+from eos.db.gamedata.queries import getGroup
 
 
 # Point values
@@ -44,7 +45,7 @@ SUNESIS = 1
 ROOKIE_SHIP = 1
 
 
-_allowedShipGroups = {
+_allowedShipGroupNames = {
     'Combat Recon Ship',
     'Frigate',
     'Cruiser',
@@ -68,14 +69,16 @@ _allowedShipGroups = {
     'Logistics Frigate',
     'Electronic Attack Ship',
     'Heavy Interdiction Cruiser',
-    'Limited Issue Ships',
     'Command Destroyer',
     'Marauder'
 }
 
 
 def isShipGroupAllowed(group: eos.gamedata.Group):
-    return group.name in _allowedShipGroups
+    # 'Limited Issue Ships' is a fake group which isn't present in the database, so we don't want to put it in the
+    # allowed groups set, because we also query the database with these names to retrieve the groups themselves
+    return (group.name in _allowedShipGroupNames) or (group.name == "Limited Issue Ships")
+
 
 
 _disallowedShips = {
@@ -206,15 +209,31 @@ def isShipAllowed(ship: eos.gamedata.Item):
     return shipPointValue(ship) is not None
 
 
-_disallowedModules = {
-    "Micro Jump Field Generator",
-    "Bastion Module I",
-    "Target Spectrum Breaker",
-}
+_disallowedModuleMarketGroups = {
+    "Target Breaker",
+    "Micro Jump Field Generators",
+    "Cloaking Devices",
+    "Interdiction Sphere Launchers",
+    "Clone Vat Bays"
+    "Cynosural Field Generators",
+    "Jump Portal Generators",
+    "Scriptable Armor Hardeners",
+    "Scriptable Shield Hardeners",
+    "Superweapons",
+    "Siege Modules", # Includes Bastion
 
+    # Useless
+    "Jump Economizers",
+    "Warp Accelerators",
+    "Harvest Equipment",
+    "Warp Disruptors",
+    "Analyzers",
+    "Entosis Links",
+    "Scan Probe Launchers",
+    "Scanning Upgrades",
+    "Survey Probe Launchers",
+    "Survey Scanners",
 
-_disallowedModuleGroups = {
-    "Cloaking Device"
 }
 
 
@@ -240,12 +259,36 @@ def isCapitalRig(rig: eos.gamedata.Item):
     return rig.attributes["rigSize"].value > 3
 
 
-def isModuleAllowed(module: eos.gamedata.Item):
-    if module.name in _disallowedModules:
+_allowedShipGroupsIds = {getGroup(shipGroupName).ID for shipGroupName in _allowedShipGroupNames}
+
+
+# Copied from eos.saveddata.module
+def isCapitalSizeModule(module: eos.gamedata.Item):
+    volumeAttr = module.attributes.get("volume", None)
+    return (volumeAttr is None) or (volumeAttr.value >= 4000)
+
+
+def fitsOnLegalShips(module: eos.gamedata.Item):
+    if isCapitalSizeModule(module):
         return False
-    elif module.group.groupName in _disallowedModuleGroups:
+
+    fitsOnGroupIds = set()
+    for attr in list(module.attributes.keys()):
+        if attr.startswith("canFitShipGroup"):
+            shipGroupId = module.attributes[attr].value
+            if shipGroupId is not None:
+                fitsOnGroupIds.add(shipGroupId)
+
+    return (len(fitsOnGroupIds) == 0) or not fitsOnGroupIds.isdisjoint(_allowedShipGroupsIds)
+
+
+
+def isModuleAllowed(module: eos.gamedata.Item):
+    if (module.marketGroup is not None) and (module.marketGroup.name in _disallowedModuleMarketGroups):
         return False
     elif _isInMarketGroup(module, "Rigs") and (isTech2(module) or isCapitalRig(module)):
+        return False
+    elif not fitsOnLegalShips(module):
         return False
     return True
 
@@ -374,6 +417,7 @@ def isImplantAllowed(implant: eos.gamedata.Item):
 _disallowedItemCategories = {
     "Structure",
     "Fighter",
+    "Structure Module",
 }
 
 
@@ -381,7 +425,7 @@ def isItemAllowed(item: eos.gamedata.Item):
     categoryName = item.category.name
     if categoryName in _disallowedItemCategories:
         return False
-    if categoryName == "Ship":
+    elif categoryName == "Ship":
         return isShipAllowed(item)
     elif categoryName == "Module":
         return isModuleAllowed(item)
