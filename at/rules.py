@@ -225,6 +225,7 @@ _disallowedModuleMarketGroups = {
     "Siege Modules", # Includes Bastion
     "25000mm Armor Plate",
     "XL Launchers",
+    "Rapid Torpedo Launchers",
 
     # Useless
     "Jump Economizers",
@@ -267,6 +268,84 @@ def _isInAnyMarketGroup(item: eos.gamedata.Item, groupNames):
     return any(_isInMarketGroup(item, marketGroup) for marketGroup in groupNames)
 
 
+_disallowedModuleMetaGroupNames = {
+    'Faction',
+    'Deadspace',
+    'Officer',
+    'Storyline',
+}
+
+
+def _isAllowedModuleMeta(metaGroup: eos.gamedata.MetaGroup):
+    return (metaGroup is None) or (metaGroup.name not in _disallowedModuleMetaGroupNames)
+
+
+_allowedAnyMetaOnFlagshipModuleGroups = {
+    'Energy Weapon',
+    'Hybrid Weapon',
+    'Precursor Weapon',
+    'Projectile Weapon',
+    'Missile Launcher Cruise',
+    'Missile Launcher Heavy Assault',
+    'Missile Launcher Heavy',
+    'Missile Launcher Light',
+    'Missile Launcher Rapid Heavy',
+    'Missile Launcher Rapid Light',
+    'Missile Launcher Rocket',
+    'Missile Launcher Torpedo',
+
+    'Smart Bomb',
+    'Propulsion Module',
+
+    'Warp Scrambler',
+    'Stasis Grappler',
+    'Target Painter',
+    'Sensor Booster',
+    'Signal Amplifier',
+    'Overdrive Injector System',
+    'Nanofiber Internal Structure',
+    'Inertial Stabilizer',
+
+    'Ballistic Control system',
+    'Entropic Radiation Sink',
+    'Gyrostabilizer',
+    'Heat Sink',
+    'Magnetic Field Stabilizer',
+    'Missile Guidance Computer',
+    'Missile Guidance Enhancer',
+    'Remote Tracking Computer',
+    'Tracking Computer',
+    'Tracking Enhancer',
+    'Drone Damage Modules',
+    'Drone Navigation Computer',
+    'Drone Tracking Modules',
+    'Drone Tracking Enhancer',
+    'Drone Control Range Module',
+
+    'Armor Reinforcer',
+    'Shield Extender',
+    'Damage Control',
+
+    'Shield Booster',
+    'Armor Repair Unit',
+}
+
+
+def _isAnyMetaModuleAllowedOnFlagship(module: eos.gamedata.Item):
+    marketGroupName = module.marketGroup.name
+    # Non-BS weapons are allowed, but hardly useful on a Flagship
+    if _isInAnyMarketGroup(module, {"Energy Turrets", "Hybrid Turrets", "Precursor Turrets", "Projectile Turrets"}) and (marketGroupName != "Large"):
+        return False
+    elif _isInMarketGroup(module, "Missile Launchers") and marketGroupName not in {"Cruise Launchers", "Rapid Heavy Missile Launchers", "Torpedo Launchers}"}:
+        return False
+
+    # Non-BS prop modules are allowed, but hardly useful on a Flagship
+    elif (module.group.name == 'Propulsion Module') and (module.attributes["massAddition"].value < 10000000.0):
+        return False
+
+    return module.group.name in _allowedAnyMetaOnFlagshipModuleGroups
+
+
 def isTech2(item: eos.gamedata.Item):
     metaGroup = item.metaGroup
     return (metaGroup is not None) and (metaGroup.name == "Tech II")
@@ -302,6 +381,8 @@ def fitsOnLegalShips(module: eos.gamedata.Item):
 
 def isModuleAllowed(module: eos.gamedata.Item):
     if (module.marketGroup is not None) and (module.marketGroup.name in _disallowedModuleMarketGroups):
+        return False
+    elif not (_isAllowedModuleMeta(module.metaGroup) or _isAnyMetaModuleAllowedOnFlagship(module)):
         return False
     elif _isInMarketGroup(module, "Rigs") and (isTech2(module) or isCapitalRig(module)):
         return False
