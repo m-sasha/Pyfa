@@ -4,10 +4,12 @@ from service.settings import SettingsProvider
 
 class SetupShip(object):
 
-    def __init__(self, shipId, fitId=None) -> None:
+
+    def __init__(self, shipId, fitId=None, active=True) -> None:
         super().__init__()
         self.shipId = shipId
         self.fitId = fitId
+        self.active = active
 
 
 class Setup(object):
@@ -20,12 +22,14 @@ class Setup(object):
 
 class StoredSetups:
 
-    _settings = SettingsProvider.getInstance().getSettings("pyfaSetups", {})
+    _settings = SettingsProvider.getInstance().getSettings("pyfaSetups", {
+        "setups": []
+    })
 
     @staticmethod
     def loadSetups() -> List[Setup]:
         setups = StoredSetups._settings["setups"]
-        return setups if not setups is None else []
+        return setups
 
     @staticmethod
     def addSetup(setup: Setup) -> None:

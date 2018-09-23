@@ -46,8 +46,7 @@ class SetupsFrame(wx.Frame):
         self.setupsList = setupsList
         self.setupPanel = setupPanel
 
-        if self.setups:
-            setupsList.showSetups(self.setups)
+        setupsList.showSetups(self.setups)
 
         # from service.fit import Fit
         # sFit = Fit.getInstance()

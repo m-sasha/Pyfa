@@ -17,7 +17,8 @@ _FIT_COL = 1
 _POINTS_COL = 2
 _EHP_COL = 3
 _DPS_COL = 4
-_TOTAL_COLS = 5
+_ACTIVE_COL = 5
+_TOTAL_COLS = 6
 
 class SetupPanel(Panel):
 
@@ -40,9 +41,13 @@ class SetupPanel(Panel):
         grid.SetColLabelValue(_POINTS_COL, "Points")
         grid.SetColLabelValue(_EHP_COL, "EHP")
         grid.SetColLabelValue(_DPS_COL, "DPS")
+        grid.SetColLabelValue(_ACTIVE_COL, "Active?")
+
+        grid.SetColFormatBool(_ACTIVE_COL)
 
         grid.Bind(wx.grid.EVT_GRID_CELL_CHANGING, self._onCellChanging)
         grid.Bind(wx.grid.EVT_GRID_CELL_RIGHT_CLICK, self._showContextMenu)
+        grid.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self._onCellLeftClick)
         gui.mainFrame.MainFrame.getInstance().Bind(GE.FIT_CHANGED, self._onFitChanged)
 
 
@@ -66,15 +71,16 @@ class SetupPanel(Panel):
         sizer.Add(infoPanelSizer, 0, wx.EXPAND | wx.ALL, border=8)
         self.SetSizer(sizer)
 
-        self.grid = grid
+        self._grid = grid
         self.shipCountLabel = shipCountLabel
         self.pointCountLabel = pointCountLabel
         self.dpsLabel = dpsLabel
         self.ehpLabel = ehpLabel
         self._setup : Setup = None
 
+
     def showSetup(self, setup : Setup or None):
-        grid = self.grid
+        grid = self._grid
         rowCount = grid.GetNumberRows()
         if rowCount > 0:
             grid.DeleteRows(0, rowCount)
@@ -87,49 +93,78 @@ class SetupPanel(Panel):
         shipCount = len(setup.ships)
         grid.AppendRows(shipCount)
         for i,setupShip in enumerate(setup.ships):
-            self._updateShipRow(i, setupShip)
+            self._updateShipRow(i, setupShip, updateShipInfo=False)
         self._insertAddShipRow(shipCount)
 
+        self._updateSetupInfo()
 
-    def _updateShipRow(self, row, setupShip: SetupShip):
-        grid = self.grid
+
+    @property
+    def shipCount(self):
+        return len(self._setup.ships) if self._setup else 0
+
+
+    def _updateShipRow(self, row, setupShip: SetupShip, updateShipInfo=True):
+        grid = self._grid
         sFit = Fit.getInstance()
         ship = eos.db.getItem(setupShip.shipId)
         fitId = setupShip.fitId
         fit = sFit.getFit(setupShip.fitId, basic=False) if fitId is not None else None
+
+        grid.SetCellSize(row, _SHIP_COL, 1, 1)  # Fix what may have been set by _insertAddShipRow
         grid.SetCellValue(row, _SHIP_COL , ship.name)
         grid.SetCellValue(row, _POINTS_COL, str(at.rules.shipPointValue(ship)))
         if fit is not None:
             grid.SetCellValue(row, _FIT_COL, fit.name)
             grid.SetCellValue(row, _EHP_COL, formatAmount(fit.totalEHP, 3, 0, 9))
             grid.SetCellValue(row, _DPS_COL, formatAmount(fit.totalDPS, 3, 0, 0))
+        grid.SetCellValue(row, _ACTIVE_COL, "1" if setupShip.active else "0")
 
         grid.SetReadOnly(row, _POINTS_COL)
         grid.SetReadOnly(row, _EHP_COL)
         grid.SetReadOnly(row, _DPS_COL)
+        grid.SetReadOnly(row, _ACTIVE_COL)
 
         grid.SetCellAlignment(row, _POINTS_COL, wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
         grid.SetCellAlignment(row, _EHP_COL, wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
         grid.SetCellAlignment(row, _DPS_COL, wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
+        grid.SetCellAlignment(row, _ACTIVE_COL, wx.ALIGN_CENTER, wx.ALIGN_CENTER)
+
+        if updateShipInfo:
+            self._updateSetupInfo()
 
 
     def _insertAddShipRow(self, row):
-        grid = self.grid
+        grid = self._grid
         grid.AppendRows()
         grid.SetCellValue(row, _SHIP_COL, "<Add Ship>")
-        grid.SetReadOnly(row, _FIT_COL)
-        grid.SetReadOnly(row, _POINTS_COL)
+        grid.SetCellSize(row, _SHIP_COL, 1, _TOTAL_COLS)
+
+
+    def _updateSetupInfo(self):
+        sFit = Fit.getInstance()
+        activeShips = [ship for ship in self._setup.ships if ship.active]
+        activeFits = [sFit.getFit(ship.fitId, basic=False) for ship in activeShips]
+        self.shipCountLabel.SetLabelText(str(len(activeShips)))
+        self.pointCountLabel.SetLabelText(str(sum([at.rules.shipPointValue(eos.db.getItem(ship.shipId)) for ship in activeShips])))
+        self.ehpLabel.SetLabelText(formatAmount(sum([fit.totalEHP if fit else 0 for fit in activeFits]), 3, 0, 9))
+        self.dpsLabel.SetLabelText(formatAmount(sum([fit.totalDPS if fit else 0 for fit in activeFits]), 3, 0, 0))
 
 
     def _onCellChanging(self, event: wx.grid.GridEvent):
+        row = event.GetRow()
         col = event.GetCol()
         if col == _SHIP_COL:
-            if event.GetRow() == len(self._setup.ships):  # <Add Ship>
+            if event.GetRow() == self.shipCount:  # <Add Ship>
                 self._onAddShip(event)
             else:
                 self._onShipChanging(event)
         elif col == _FIT_COL:
             self._onChoosingFit(event)
+        elif col == _ACTIVE_COL:
+            ship = self._setup.ships[row]
+            ship.active = not ship.active
+            self._updateShipRow(row, ship)
 
 
     def _onAddShip(self, event: wx.grid.GridEvent):
@@ -182,6 +217,9 @@ class SetupPanel(Panel):
 
 
     def _rowOfFit(self, fitId):
+        if self._setup is None:
+            return None
+
         for i,ship in enumerate(self._setup.ships):
             if fitId == ship.fitId:
                 return i
@@ -199,10 +237,10 @@ class SetupPanel(Panel):
 
     def _showContextMenu(self, event: wx.grid.GridEvent):
         row = event.GetRow()
-        if row >= len(self._setup.ships):
+        if row >= self.shipCount:
             return
 
-        self.grid.SelectRow(row)
+        self._grid.SelectRow(row)
         fitId = self._setup.ships[row].fitId
 
         if not hasattr(self, "openFitId"):
@@ -223,6 +261,19 @@ class SetupPanel(Panel):
 
         self.PopupMenu(menu)
         menu.Destroy()
+
+
+    def _onCellLeftClick(self, event: wx.grid.GridEvent):
+        if self._setup is None:
+            return
+
+        row = event.GetRow()
+        col = event.GetCol()
+        if col == _ACTIVE_COL and row < self.shipCount:
+            ship = self._setup.ships[row]
+            ship.active = not ship.active
+            self._updateShipRow(row, ship)
+        event.Skip()
 
 
     @staticmethod
