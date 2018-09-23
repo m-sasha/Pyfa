@@ -6,8 +6,8 @@ from typing import List
 
 class SetupsList(Grid):
 
-    def __init__(self, parent, owner, size = (200,-1)):
-        Grid.__init__(self, parent, size = size)
+    def __init__(self, parent, owner):
+        Grid.__init__(self, parent)
 
         self._owner = owner
         self._setups = []
@@ -21,10 +21,15 @@ class SetupsList(Grid):
         self.DisableDragColMove() # Disable reordering of columns by dragging
         self.SetCellHighlightPenWidth(0)  # Disable the highlight around the "current" cell
         self.SetSelectionMode(wx.grid.Grid.SelectRows)  # Select the entire row
-        self.SetColSize(0, size[0])
 
         self.Bind(wx.grid.EVT_GRID_SELECT_CELL, self._onCellSelected)
         self.Bind(wx.grid.EVT_GRID_CELL_CHANGING, self._onCellChanging)
+        self.Bind(wx.EVT_SIZE, self._onResized)
+
+
+    def _onResized(self, event):
+        self.SetColSize(0, event.Size.width)
+        event.Skip()
 
 
     def showSetups(self, setups: List[Setup]):

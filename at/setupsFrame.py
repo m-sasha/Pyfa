@@ -31,14 +31,16 @@ class SetupsFrame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.OnClose)
 
         # Create the UI
-        mainSizer = wx.BoxSizer(wx.HORIZONTAL)
+        mainSplitter = wx.SplitterWindow(self, style=wx.SP_LIVE_UPDATE)
 
-        setupsList = SetupsList(self, self)
-        setupPanel = SetupPanel(self)
+        setupsList = SetupsList(mainSplitter, self)
+        setupPanel = SetupPanel(mainSplitter)
 
-        mainSizer.Add(setupsList, 0, wx.EXPAND)
-        mainSizer.Add(setupPanel, 1, wx.EXPAND)
+        mainSplitter.SplitVertically(setupsList, setupPanel)
+        mainSplitter.SetSashPosition(150)
 
+        mainSizer = wx.BoxSizer()
+        mainSizer.Add(mainSplitter, 1, wx.EXPAND)
         self.SetSizer(mainSizer)
 
         self.setupsList = setupsList
