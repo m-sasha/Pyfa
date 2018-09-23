@@ -1,5 +1,6 @@
 import wx
 from wx.grid import Grid
+from wx import Panel
 from at.setup import Setup, SetupShip
 import eos.db
 import at.rules
@@ -18,40 +19,67 @@ _EHP_COL = 3
 _DPS_COL = 4
 _TOTAL_COLS = 5
 
-class SetupPanel(Grid):
+class SetupPanel(Panel):
 
     def __init__(self, parent):
-        Grid.__init__(self, parent)
+        Panel.__init__(self, parent)
 
-        self.CreateGrid(0, _TOTAL_COLS)
+        grid = Grid(self)
 
-        self.SetRowLabelSize(0)  # Hide the index column
-        self.EnableGridLines(False)  # Hide grid lines
-        self.DisableDragGridSize()  # Disable resizing of rows/columns by dragging
-        self.DisableDragColMove() # Disable reordering of columns by dragging
-        self.SetCellHighlightPenWidth(0)  # Disable the highlight around the "current" cell
-        self.SetSelectionMode(wx.grid.Grid.SelectRows)  # Select the entire row
+        grid.CreateGrid(0, _TOTAL_COLS)
 
-        self.SetColLabelValue(_SHIP_COL, "Ship")
-        self.SetColLabelValue(_FIT_COL, "Fit")
-        self.SetColLabelValue(_POINTS_COL, "Points")
-        self.SetColLabelValue(_EHP_COL, "EHP")
-        self.SetColLabelValue(_DPS_COL, "DPS")
+        grid.SetRowLabelSize(0)  # Hide the index column
+        grid.EnableGridLines(False)  # Hide grid lines
+        grid.DisableDragGridSize()  # Disable resizing of rows/columns by dragging
+        grid.DisableDragColMove() # Disable reordering of columns by dragging
+        grid.SetCellHighlightPenWidth(0)  # Disable the highlight around the "current" cell
+        grid.SetSelectionMode(wx.grid.Grid.SelectRows)  # Select the entire row
 
-        self.Bind(wx.grid.EVT_GRID_CELL_CHANGING, self.onCellChanging)
+        grid.SetColLabelValue(_SHIP_COL, "Ship")
+        grid.SetColLabelValue(_FIT_COL, "Fit")
+        grid.SetColLabelValue(_POINTS_COL, "Points")
+        grid.SetColLabelValue(_EHP_COL, "EHP")
+        grid.SetColLabelValue(_DPS_COL, "DPS")
+
+        grid.Bind(wx.grid.EVT_GRID_CELL_CHANGING, self.onCellChanging)
         gui.mainFrame.MainFrame.getInstance().Bind(GE.FIT_CHANGED, self._onFitChanged)
-        self.Bind(wx.grid.EVT_GRID_CELL_RIGHT_CLICK, self._showContextMenu)
+        grid.Bind(wx.grid.EVT_GRID_CELL_RIGHT_CLICK, self._showContextMenu)
 
+        shipCountLabel = wx.StaticText(self)
+        pointCountLabel = wx.StaticText(self)
+        dpsLabel = wx.StaticText(self)
+        ehpLabel = wx.StaticText(self)
 
+        infoPanelSizer = wx.FlexGridSizer(2, 8, 0)
+        infoPanelSizer.Add(wx.StaticText(self, label="Ships:"), flag=wx.ALIGN_RIGHT)
+        infoPanelSizer.Add(shipCountLabel)
+        infoPanelSizer.Add(wx.StaticText(self, label="Points:"), flag=wx.ALIGN_RIGHT)
+        infoPanelSizer.Add(pointCountLabel)
+        infoPanelSizer.Add(wx.StaticText(self, label="Total DPS:"), flag=wx.ALIGN_RIGHT)
+        infoPanelSizer.Add(dpsLabel)
+        infoPanelSizer.Add(wx.StaticText(self, label="Total EHP:"), flag=wx.ALIGN_RIGHT)
+        infoPanelSizer.Add(ehpLabel)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(grid, 1, wx.EXPAND)
+        sizer.Add(infoPanelSizer, 0, wx.EXPAND | wx.ALL, border=8)
+        self.SetSizer(sizer)
+
+        self.grid = grid
+        self.shipCountLabel = shipCountLabel
+        self.pointCountLabel = pointCountLabel
+        self.dpsLabel = dpsLabel
+        self.ehpLabel = ehpLabel
         self._setup : Setup = None
 
     def showSetup(self, setup : Setup):
-        rowCount = self.GetNumberRows()
+        grid = self.grid
+        rowCount = grid.GetNumberRows()
         if rowCount > 0:
-            self.DeleteRows(0, rowCount)
+            grid.DeleteRows(0, rowCount)
 
         shipCount = len(setup.ships)
-        self.AppendRows(shipCount)
+        grid.AppendRows(shipCount)
         for i,setupShip in enumerate(setup.ships):
             self._updateShipRow(i, setupShip)
         self._insertAddShipRow(shipCount)
@@ -59,31 +87,33 @@ class SetupPanel(Grid):
         self._setup = setup
 
     def _updateShipRow(self, row, setupShip: SetupShip):
+        grid = self.grid
         sFit = Fit.getInstance()
         ship = eos.db.getItem(setupShip.shipId)
         fitId = setupShip.fitId
         fit = sFit.getFit(setupShip.fitId, basic=False) if fitId is not None else None
-        self.SetCellValue(row, _SHIP_COL , ship.name)
-        self.SetCellValue(row, _POINTS_COL, str(at.rules.shipPointValue(ship)))
+        grid.SetCellValue(row, _SHIP_COL , ship.name)
+        grid.SetCellValue(row, _POINTS_COL, str(at.rules.shipPointValue(ship)))
         if fit is not None:
-            self.SetCellValue(row, _FIT_COL, fit.name)
-            self.SetCellValue(row, _EHP_COL, formatAmount(fit.totalEHP, 3, 0, 9))
-            self.SetCellValue(row, _DPS_COL, formatAmount(fit.totalDPS, 3, 0, 0))
+            grid.SetCellValue(row, _FIT_COL, fit.name)
+            grid.SetCellValue(row, _EHP_COL, formatAmount(fit.totalEHP, 3, 0, 9))
+            grid.SetCellValue(row, _DPS_COL, formatAmount(fit.totalDPS, 3, 0, 0))
 
-        self.SetReadOnly(row, _POINTS_COL)
-        self.SetReadOnly(row, _EHP_COL)
-        self.SetReadOnly(row, _DPS_COL)
+        grid.SetReadOnly(row, _POINTS_COL)
+        grid.SetReadOnly(row, _EHP_COL)
+        grid.SetReadOnly(row, _DPS_COL)
 
-        self.SetCellAlignment(row, _POINTS_COL, wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
-        self.SetCellAlignment(row, _EHP_COL, wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
-        self.SetCellAlignment(row, _DPS_COL, wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
+        grid.SetCellAlignment(row, _POINTS_COL, wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
+        grid.SetCellAlignment(row, _EHP_COL, wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
+        grid.SetCellAlignment(row, _DPS_COL, wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
 
 
     def _insertAddShipRow(self, row):
-        self.AppendRows()
-        self.SetCellValue(row, _SHIP_COL, "<Add Ship>")
-        self.SetReadOnly(row, _FIT_COL)
-        self.SetReadOnly(row, _POINTS_COL)
+        grid = self.grid
+        grid.AppendRows()
+        grid.SetCellValue(row, _SHIP_COL, "<Add Ship>")
+        grid.SetReadOnly(row, _FIT_COL)
+        grid.SetReadOnly(row, _POINTS_COL)
 
 
     def onCellChanging(self, event: wx.grid.GridEvent):
@@ -167,7 +197,7 @@ class SetupPanel(Grid):
         if row >= len(self._setup.ships):
             return
 
-        self.SelectRow(row)
+        self.grid.SelectRow(row)
         fitId = self._setup.ships[row].fitId
 
         if not hasattr(self, "openFitId"):
@@ -180,7 +210,7 @@ class SetupPanel(Grid):
         openFitItem : wx.MenuItem = menu.Append(self.openFitId, "Open Fit")
         self.Bind(wx.EVT_MENU, lambda _ : self._onOpenFit(fitId, False), openFitItem)
 
-        openFitInNewTabItem: wx.MenuItem = menu.Append(self.openFitInNewTabId, "Open Fit In New Tab");
+        openFitInNewTabItem: wx.MenuItem = menu.Append(self.openFitInNewTabId, "Open Fit In New Tab")
         self.Bind(wx.EVT_MENU, lambda _: self._onOpenFit(fitId, True), openFitInNewTabItem)
 
         removeFromSetupItem : wx.MenuItem = menu.Append(self.deleteFitId, "Remove From Setup")
