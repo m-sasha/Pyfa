@@ -64,6 +64,10 @@ class SetupsFrame(wx.Frame):
         self.setupPanel.showSetup(setup)
 
 
+    def onNoSetupSelected(self):
+        self.setupPanel.showSetup(None)
+
+
     def LoadFrameAttribs(self):
         defaultAttribs = {"wnd_size": (1000, 700),
                           "wnd_position": None,

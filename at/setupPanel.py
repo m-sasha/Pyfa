@@ -41,9 +41,10 @@ class SetupPanel(Panel):
         grid.SetColLabelValue(_EHP_COL, "EHP")
         grid.SetColLabelValue(_DPS_COL, "DPS")
 
-        grid.Bind(wx.grid.EVT_GRID_CELL_CHANGING, self.onCellChanging)
-        gui.mainFrame.MainFrame.getInstance().Bind(GE.FIT_CHANGED, self._onFitChanged)
+        grid.Bind(wx.grid.EVT_GRID_CELL_CHANGING, self._onCellChanging)
         grid.Bind(wx.grid.EVT_GRID_CELL_RIGHT_CLICK, self._showContextMenu)
+        gui.mainFrame.MainFrame.getInstance().Bind(GE.FIT_CHANGED, self._onFitChanged)
+
 
         shipCountLabel = wx.StaticText(self)
         pointCountLabel = wx.StaticText(self)
@@ -72,11 +73,16 @@ class SetupPanel(Panel):
         self.ehpLabel = ehpLabel
         self._setup : Setup = None
 
-    def showSetup(self, setup : Setup):
+    def showSetup(self, setup : Setup or None):
         grid = self.grid
         rowCount = grid.GetNumberRows()
         if rowCount > 0:
             grid.DeleteRows(0, rowCount)
+
+        self._setup = setup
+
+        if setup is None:
+            return
 
         shipCount = len(setup.ships)
         grid.AppendRows(shipCount)
@@ -84,7 +90,6 @@ class SetupPanel(Panel):
             self._updateShipRow(i, setupShip)
         self._insertAddShipRow(shipCount)
 
-        self._setup = setup
 
     def _updateShipRow(self, row, setupShip: SetupShip):
         grid = self.grid
@@ -116,7 +121,7 @@ class SetupPanel(Panel):
         grid.SetReadOnly(row, _POINTS_COL)
 
 
-    def onCellChanging(self, event: wx.grid.GridEvent):
+    def _onCellChanging(self, event: wx.grid.GridEvent):
         col = event.GetCol()
         if col == _SHIP_COL:
             if event.GetRow() == len(self._setup.ships):  # <Add Ship>

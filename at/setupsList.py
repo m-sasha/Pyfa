@@ -7,7 +7,7 @@ from typing import List
 class SetupsList(Grid):
 
     def __init__(self, parent, owner):
-        Grid.__init__(self, parent)
+        Grid.__init__(self, parent, style=wx.BORDER_RAISED)
 
         self._owner = owner
         self._setups = []
@@ -28,7 +28,7 @@ class SetupsList(Grid):
 
 
     def _onResized(self, event):
-        self.SetColSize(0, event.Size.width)
+        self.SetColSize(0, event.Size.width - self.GetWindowBorderSize().x)
         event.Skip()
 
 
@@ -57,8 +57,12 @@ class SetupsList(Grid):
 
     def _onCellSelected(self, event: wx.grid.GridEvent):
         row = event.GetRow()
+        col = event.GetCol()
+        self.SelectBlock(row, col, row, col)
         if row < len(self._setups):
             self._owner.onSetupSelected(row)
+        else:
+            self._owner.onNoSetupSelected()
 
 
     def _onCellChanging(self, event: wx.grid.GridEvent):
