@@ -145,7 +145,7 @@ class ResistancesViewFull(StatsView):
             box = wx.BoxSizer(wx.VERTICAL)
             box.SetMinSize(wx.Size(self.getTextExtentW("WWWWk"), -1))
 
-            lbl = wx.StaticText(contentPanel, wx.ID_ANY, "0" if tankType != "damagePattern" else "Pattern")
+            lbl = wx.StaticText(contentPanel, wx.ID_ANY, "0" if tankType != "damagePattern" else "Damage")
             box.Add(lbl, 0, wx.ALIGN_RIGHT)
 
             setattr(self, "labelResistance%sEhp" % tankType.capitalize(), lbl)
