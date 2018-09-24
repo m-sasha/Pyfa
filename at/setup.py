@@ -12,6 +12,10 @@ class SetupShip(object):
         self.active = active
 
 
+    def toggleActive(self):
+        self.active = not self.active
+
+
 class Setup(object):
 
     def __init__(self, name: str):

@@ -93,18 +93,47 @@ class SetupPanel(Panel):
         shipCount = len(setup.ships)
         grid.AppendRows(shipCount)
         for i,setupShip in enumerate(setup.ships):
-            self._updateShipRow(i, setupShip, updateShipInfo=False)
-        self._insertAddShipRow(shipCount)
+            self._updateShipRow(i, updateShipInfo=False)
+        self._insertAddShipRow()
 
         self._updateSetupInfo()
 
 
     @property
-    def shipCount(self):
+    def _shipCount(self):
         return len(self._setup.ships) if self._setup else 0
 
 
-    def _updateShipRow(self, row, setupShip: SetupShip, updateShipInfo=True):
+    def _isShipRow(self, row):
+        return 0 <= row < self._shipCount
+
+
+    def _getShip(self, row):
+        return self._setup.ships[row] if self._setup is not None else None
+
+
+    @property
+    def _addShipRowIndex(self):
+        return self._shipCount
+
+
+    @property
+    def _totalsRowIndex(self):
+        return self._shipCount + 1
+
+
+    def _rowOfFit(self, fitId):
+        if self._setup is None:
+            return None
+
+        for i,ship in enumerate(self._setup.ships):
+            if fitId == ship.fitId:
+                return i
+        return None
+
+
+    def _updateShipRow(self, row, updateShipInfo=True):
+        setupShip = self._getShip(row)
         grid = self._grid
         sFit = Fit.getInstance()
         ship = eos.db.getItem(setupShip.shipId)
@@ -134,7 +163,8 @@ class SetupPanel(Panel):
             self._updateSetupInfo()
 
 
-    def _insertAddShipRow(self, row):
+    def _insertAddShipRow(self):
+        row = self._addShipRowIndex
         grid = self._grid
         grid.AppendRows()
         grid.SetCellValue(row, _SHIP_COL, "<Add Ship>")
@@ -155,16 +185,15 @@ class SetupPanel(Panel):
         row = event.GetRow()
         col = event.GetCol()
         if col == _SHIP_COL:
-            if event.GetRow() == self.shipCount:  # <Add Ship>
+            if row == self._addShipRowIndex:  # <Add Ship>
                 self._onAddShip(event)
-            else:
+            elif self._isShipRow(row):
                 self._onShipChanging(event)
         elif col == _FIT_COL:
             self._onChoosingFit(event)
         elif col == _ACTIVE_COL:
-            ship = self._setup.ships[row]
-            ship.active = not ship.active
-            self._updateShipRow(row, ship)
+            self._getShip(row).toggleActive()
+            self._updateShipRow(row)
 
 
     def _onAddShip(self, event: wx.grid.GridEvent):
@@ -178,8 +207,8 @@ class SetupPanel(Panel):
 
         ship = SetupShip(newShip.typeID)
         self._setup.ships.append(ship)
-        self._updateShipRow(event.GetRow(), ship)
-        self._insertAddShipRow(event.GetRow()+1)
+        self._updateShipRow(event.GetRow())
+        self._insertAddShipRow()
 
         pass
 
@@ -193,10 +222,11 @@ class SetupPanel(Panel):
             event.Veto()
             return
 
-        ship = self._setup.ships[event.GetRow()]
+        row = event.GetRow()
+        ship = self._getShip(row)
         ship.shipId = newShip.typeID
         ship.fitId = None
-        self._updateShipRow(event.GetRow(), ship)
+        self._updateShipRow(row)
 
 
     def _onChoosingFit(self, event: wx.grid.GridEvent):
@@ -207,23 +237,13 @@ class SetupPanel(Panel):
             return
 
         fitId, shipId = fit[0], fit[2]
-        ship = self._setup.ships[event.GetRow()]
+        ship = self._getShip(event.GetRow())
         if ship.shipId != shipId:
             event.Veto()
             return
 
         ship.fitId = fitId
-        self._updateShipRow(event.GetRow(), ship)
-
-
-    def _rowOfFit(self, fitId):
-        if self._setup is None:
-            return None
-
-        for i,ship in enumerate(self._setup.ships):
-            if fitId == ship.fitId:
-                return i
-        return None
+        self._updateShipRow(event.GetRow())
 
 
     def _onFitChanged(self, event):
@@ -231,17 +251,17 @@ class SetupPanel(Panel):
         if row is None:
             return
 
-        self._updateShipRow(row, self._setup.ships[row])
+        self._updateShipRow(row)
         event.Skip()
 
 
     def _showContextMenu(self, event: wx.grid.GridEvent):
         row = event.GetRow()
-        if row >= self.shipCount:
+        if not self._isShipRow(row):
             return
 
         self._grid.SelectRow(row)
-        fitId = self._setup.ships[row].fitId
+        fitId = self._getShip(row).fitId
 
         if not hasattr(self, "openFitId"):
             self.openFitId = wx.NewId()
@@ -269,10 +289,9 @@ class SetupPanel(Panel):
 
         row = event.GetRow()
         col = event.GetCol()
-        if col == _ACTIVE_COL and row < self.shipCount:
-            ship = self._setup.ships[row]
-            ship.active = not ship.active
-            self._updateShipRow(row, ship)
+        if col == _ACTIVE_COL and self._isShipRow(row):
+            self._getShip(row).toggleActive()
+            self._updateShipRow(row)
         event.Skip()
 
 
