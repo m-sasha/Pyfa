@@ -14,12 +14,13 @@ class SetupsList(Grid):
 
         self.CreateGrid(0, 1)
 
-        self.SetRowLabelSize(0)  # Hide the index column
-        self.SetColLabelSize(0)  # Hide the column names
+        self.HideRowLabels()  # Hide the index column
+        self.HideColLabels()  # Hide the column names
         self.EnableGridLines(False)  # Hide grid lines
         self.DisableDragGridSize()  # Disable resizing of rows/columns by dragging
         self.DisableDragColMove() # Disable reordering of columns by dragging
         self.SetCellHighlightPenWidth(0)  # Disable the highlight around the "current" cell
+        self.SetCellHighlightROPenWidth(0)  # Disable the highlight around the "current" read-only cell
         self.SetSelectionMode(wx.grid.Grid.SelectRows)  # Select the entire row
 
         self.Bind(wx.grid.EVT_GRID_SELECT_CELL, self._onCellSelected)

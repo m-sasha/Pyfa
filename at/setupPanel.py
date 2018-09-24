@@ -29,11 +29,12 @@ class SetupPanel(Panel):
 
         grid.CreateGrid(0, _TOTAL_COLS)
 
-        grid.SetRowLabelSize(0)  # Hide the index column
+        grid.HideRowLabels() # Hide the index column
         grid.EnableGridLines(False)  # Hide grid lines
         grid.DisableDragGridSize()  # Disable resizing of rows/columns by dragging
         grid.DisableDragColMove() # Disable reordering of columns by dragging
         grid.SetCellHighlightPenWidth(0)  # Disable the highlight around the "current" cell
+        grid.SetCellHighlightROPenWidth(0)  # Disable the highlight around the "current" read-only cell
         grid.SetSelectionMode(wx.grid.Grid.SelectRows)  # Select the entire row
 
         grid.SetColLabelValue(_SHIP_COL, "Ship")
@@ -56,15 +57,17 @@ class SetupPanel(Panel):
         dpsLabel = wx.StaticText(self)
         ehpLabel = wx.StaticText(self)
 
-        infoPanelSizer = wx.FlexGridSizer(2, 8, 0)
-        infoPanelSizer.Add(wx.StaticText(self, label="Ships:"), flag=wx.ALIGN_RIGHT)
-        infoPanelSizer.Add(shipCountLabel)
-        infoPanelSizer.Add(wx.StaticText(self, label="Points:"), flag=wx.ALIGN_RIGHT)
-        infoPanelSizer.Add(pointCountLabel)
-        infoPanelSizer.Add(wx.StaticText(self, label="Total DPS:"), flag=wx.ALIGN_RIGHT)
-        infoPanelSizer.Add(dpsLabel)
-        infoPanelSizer.Add(wx.StaticText(self, label="Total EHP:"), flag=wx.ALIGN_RIGHT)
-        infoPanelSizer.Add(ehpLabel)
+        infoPanelSizer = wx.FlexGridSizer(2, 0, 16)
+        infoPanelSizer.Add(wx.StaticText(self, label="Ships"), flag=wx.ALIGN_CENTER)
+        infoPanelSizer.Add(wx.StaticText(self, label="Points"), flag=wx.ALIGN_CENTER)
+        infoPanelSizer.Add(shipCountLabel, flag=wx.ALIGN_CENTER)
+        infoPanelSizer.Add(pointCountLabel, flag=wx.ALIGN_CENTER)
+        infoPanelSizer.AddSpacer(12)
+        infoPanelSizer.AddSpacer(12)
+        infoPanelSizer.Add(wx.StaticText(self, label="Total DPS"), flag=wx.ALIGN_CENTER)
+        infoPanelSizer.Add(wx.StaticText(self, label="Total EHP"), flag=wx.ALIGN_CENTER)
+        infoPanelSizer.Add(dpsLabel, flag=wx.ALIGN_CENTER)
+        infoPanelSizer.Add(ehpLabel, flag=wx.ALIGN_CENTER)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(grid, 1, wx.EXPAND)
