@@ -164,24 +164,35 @@ class ImportFromZKillboardThread(threading.Thread):
     def run(self):
         with urllib.request.urlopen(self.url) as response:
             killmails = json.loads(response.read())
+
             for count,killmail in enumerate(killmails):
                 try:
                     Port.importZKillboard(killmail, self.fitName)
                     wx.CallAfter(lambda: self.progressCallback("Processed %d killmails" % (count+1)))
                 except Exception as ex:
                     errorMsg = str(ex)
-                    wx.CallAfter(lambda: self.doneCallback("Error processing killmail(s): %s" % errorMsg))
+                    wx.CallAfter(lambda: self.doneCallback("Error processing killmail %d: %s" % (killmail["killmail_id"], errorMsg)))
                     return
             wx.CallAfter(lambda: self.doneCallback("Processed %d killmails" % (count+1)))
 
     @staticmethod
     def fitName(killmail, fit):
-        # TODO: use the character's alliance at the time of the killmail
         victimId = killmail["victim"]["character_id"]
-        characterInfo = esiapi.fetchCharacterInfo(victimId)
-        allianceId = characterInfo["alliance_id"]
-        allianceInfo = esiapi.fetchAllianceInfo(allianceId)
-        return allianceInfo["ticker"]
+        killTime = killmail["killmail_time"]
+
+        # Find the corp the victim was in at the time of the killmail
+        corpHistory = esiapi.fetchCorpHistory(victimId)
+        corpId = next(corp["corporation_id"] for corp in corpHistory if corp["start_date"] < killTime)
+
+        # Find the alliance the victim's corp was in at the time of the killmail
+        allianceHistory = esiapi.fetchAllianceHistory(corpId)
+        allianceId = next((alliance["alliance_id"] for alliance in allianceHistory if alliance["start_date"] < killTime), None)
+        if allianceId is None:  # They allowed Center for Advanced Studies in
+            corpInfo = esiapi.fetchCorpInfo(corpId)
+            return corpInfo["ticker"]
+        else:
+            allianceInfo = esiapi.fetchAllianceInfo(allianceId)
+            return allianceInfo["ticker"]
 
 
 

@@ -547,7 +547,7 @@ class Port(object):
         return fitobj
 
     @staticmethod
-    def importZKillboard(killmail, fitNameFunction=lambda killmail,fit: fit.ship.item.name):
+    def importZKillboard(killmail, fitNameFunction=lambda killmail,fit: fit.ship.item.name) -> Fit or None:
         """Parses a single killmail from the zkillboard API. The argument is an already parsed JSON"""
         sMkt = Market.getInstance()
         fit = Fit()
