@@ -20,6 +20,7 @@
 import sys
 import os.path
 from typing import Optional, Any
+from operator import itemgetter
 
 from logbook import Logger
 
@@ -167,7 +168,7 @@ class ImportFromZKillboardThread(threading.Thread):
 
             for count,killmail in enumerate(killmails):
                 try:
-                    Port.importZKillboard(killmail, self.fitName)
+                    Port.importZKillboard(killmail, ImportFromZKillboardThread.chooseFitName)
                     wx.CallAfter(lambda: self.progressCallback("Processed %d killmails" % (count+1)))
                 except Exception as ex:
                     errorMsg = str(ex)
@@ -175,24 +176,34 @@ class ImportFromZKillboardThread(threading.Thread):
                     return
             wx.CallAfter(lambda: self.doneCallback("Processed %d killmails" % (count+1)))
 
+
     @staticmethod
-    def fitName(killmail, fit):
+    def chooseFitName(killmail, fit):
         victimId = killmail["victim"]["character_id"]
+        attackerId = max(killmail["attackers"], key=itemgetter("damage_done"))["character_id"] # The attacker with the highest damage
         killTime = killmail["killmail_time"]
 
-        # Find the corp the victim was in at the time of the killmail
-        corpHistory = esiapi.fetchCorpHistory(victimId)
+        victimTicker = ImportFromZKillboardThread.getCharacterTickerAtTime(victimId, killTime)
+        attackerTicker = ImportFromZKillboardThread.getCharacterTickerAtTime(attackerId, killTime)
+        return "%s vs %s" % (victimTicker, attackerTicker)
+
+
+    @staticmethod
+    def getCharacterTickerAtTime(characterId, killTime: str):
+        """Find the corp the victim was in at the time of the killmail"""
+        corpHistory = esiapi.fetchCorpHistory(characterId)
         corpId = next(corp["corporation_id"] for corp in corpHistory if corp["start_date"] < killTime)
 
-        # Find the alliance the victim's corp was in at the time of the killmail
+        # Find the alliance the character's corp was in at the time of the killmail
         allianceHistory = esiapi.fetchAllianceHistory(corpId)
         allianceId = next((alliance["alliance_id"] for alliance in allianceHistory if alliance["start_date"] < killTime), None)
-        if allianceId is None:  # They allowed Center for Advanced Studies in
+        if allianceId is None:
             corpInfo = esiapi.fetchCorpInfo(corpId)
             return corpInfo["ticker"]
         else:
             allianceInfo = esiapi.fetchAllianceInfo(allianceId)
             return allianceInfo["ticker"]
+
 
 
 
