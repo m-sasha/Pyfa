@@ -249,10 +249,8 @@ class SetupPanel(Panel):
 
     def _onFitChanged(self, event):
         row = self._rowOfFit(event.fitID)
-        if row is None:
-            return
-
-        self._updateShipRow(row)
+        if row is not None:
+            self._updateShipRow(row)
         event.Skip()
 
 
