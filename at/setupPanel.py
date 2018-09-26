@@ -57,15 +57,13 @@ class SetupPanel(Panel):
         dpsLabel = wx.StaticText(self)
         ehpLabel = wx.StaticText(self)
 
-        infoPanelSizer = wx.FlexGridSizer(2, 0, 16)
+        infoPanelSizer = wx.FlexGridSizer(4, 0, 16)
         infoPanelSizer.Add(wx.StaticText(self, label="Ships"), flag=wx.ALIGN_CENTER)
         infoPanelSizer.Add(wx.StaticText(self, label="Points"), flag=wx.ALIGN_CENTER)
-        infoPanelSizer.Add(shipCountLabel, flag=wx.ALIGN_CENTER)
-        infoPanelSizer.Add(pointCountLabel, flag=wx.ALIGN_CENTER)
-        infoPanelSizer.AddSpacer(12)
-        infoPanelSizer.AddSpacer(12)
         infoPanelSizer.Add(wx.StaticText(self, label="Total DPS"), flag=wx.ALIGN_CENTER)
         infoPanelSizer.Add(wx.StaticText(self, label="Total EHP"), flag=wx.ALIGN_CENTER)
+        infoPanelSizer.Add(shipCountLabel, flag=wx.ALIGN_CENTER)
+        infoPanelSizer.Add(pointCountLabel, flag=wx.ALIGN_CENTER)
         infoPanelSizer.Add(dpsLabel, flag=wx.ALIGN_CENTER)
         infoPanelSizer.Add(ehpLabel, flag=wx.ALIGN_CENTER)
 
