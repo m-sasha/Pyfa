@@ -217,8 +217,7 @@ class ImportFromZKillboardThread(threading.Thread):
                             if self.victimTicker(killmail) != ticker1:
                                 for attacker in killmail["attackers"]:
                                     attackerId = attacker["character_id"]
-                                    if (attackerId not in addedCharacters) and \
-                                            self.charTickerAtTime(attackerId, killmail["killmail_time"]) == ticker1:
+                                    if (attackerId not in addedCharacters) and self.charTicker(attacker) == ticker1:
                                         setup.ships.append(SetupShip(attacker["ship_type_id"]))
                                         addedCharacters.add(attackerId)
 
@@ -242,34 +241,30 @@ class ImportFromZKillboardThread(threading.Thread):
 
     @staticmethod
     def victimTicker(killmail):
-        victimId = killmail["victim"]["character_id"]
-        killTime = killmail["killmail_time"]
-        return ImportFromZKillboardThread.charTickerAtTime(victimId, killTime)
+        character = killmail["victim"]
+        return ImportFromZKillboardThread.charTicker(character)
 
 
     @staticmethod
     def attackerTicker(killmail):
-        attackerId = max(killmail["attackers"], key=itemgetter("damage_done"))["character_id"] # The attacker with the highest damage
-        killTime = killmail["killmail_time"]
-        return ImportFromZKillboardThread.charTickerAtTime(attackerId, killTime)
+        attackerId = max(killmail["attackers"], key=itemgetter("damage_done")) # The attacker with the highest damage
+        return ImportFromZKillboardThread.charTicker(attackerId)
 
 
     @staticmethod
-    def charTickerAtTime(characterId, killTime: str):
-        """Find the corp the victim was in at the time of the killmail"""
-        corpHistory = esiapi.fetchCorpHistory(characterId)
-        corpId = next(corp["corporation_id"] for corp in corpHistory if corp["start_date"] < killTime)
-
-        # Find the alliance the character's corp was in at the time of the killmail
-        allianceHistory = esiapi.fetchAllianceHistory(corpId)
-        allianceId = next((alliance["alliance_id"] for alliance in allianceHistory if alliance["start_date"] < killTime), None)
-        if allianceId is None:
+    def charTicker(char):
+        allianceId = char.get("alliance_id", None)
+        corpId = char.get("corporation_id", None)
+        charId = char["character_id"]
+        if corpId is None:
+            charInfo = esiapi.fetchCharacterInfo(charId)
+            return charInfo["name"]
+        elif allianceId is None:
             corpInfo = esiapi.fetchCorpInfo(corpId)
             return corpInfo["ticker"]
         else:
             allianceInfo = esiapi.fetchAllianceInfo(allianceId)
             return allianceInfo["ticker"]
-
 
 
 
