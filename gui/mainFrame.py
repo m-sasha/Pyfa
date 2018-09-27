@@ -164,6 +164,7 @@ class ImportFromZKillboardThread(threading.Thread):
 
     def run(self):
         with urllib.request.urlopen(self.url) as response:
+            wx.CallAfter(lambda: self.progressCallback("Loading killmails"))
             killmails = json.loads(response.read())
             killmails.sort(key=lambda km: km["killmail_time"])
 
@@ -198,7 +199,7 @@ class ImportFromZKillboardThread(threading.Thread):
                 # Import the setups
                 import itertools
                 from at.setup import Setup, SetupShip, StoredSetups
-                fights = itertools.chain.from_iterable(fightsBySystem.values())
+                fights = list(itertools.chain.from_iterable(fightsBySystem.values()))
                 for fight in fights:
                     for ticker1 in fight[0]:
                         ticker2 = next(iter(fight[0] - {ticker1}))
@@ -228,7 +229,8 @@ class ImportFromZKillboardThread(threading.Thread):
                 wx.CallAfter(lambda: self.doneCallback("Error processing killmail %d: %s" % (killmail["killmail_id"], errorMsg)))
                 return
 
-            wx.CallAfter(lambda: self.doneCallback("Processed %d killmails" % (count+1)))
+            wx.PostEvent(MainFrame.getInstance(), GE.SetupsChanged())
+            wx.CallAfter(lambda: self.doneCallback("Processed %d killmails in %d fights" % (count+1, len(fights))))
 
 
     @staticmethod

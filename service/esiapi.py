@@ -23,7 +23,7 @@ def _fetchAsJson(endpoint, **kwargs):
     headers = {"Accept" : "text/html",
                "User-Agent": "PyfaAT v{}".format(config.version)}
     request = urllib.request.Request(url, headers=headers)
-    with urllib.request.urlopen(request) as response:
+    with urllib.request.urlopen(request, timeout=10) as response:
         data = json.loads(response.read())
         _cache[url] = data
         return data

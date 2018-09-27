@@ -2,6 +2,9 @@ import wx
 from wx.grid import Grid
 from at.setup import Setup
 from typing import List
+import gui.mainFrame
+import gui.globalEvents as GE
+
 
 
 class SetupsList(Grid):
@@ -27,6 +30,7 @@ class SetupsList(Grid):
         self.Bind(wx.grid.EVT_GRID_CELL_CHANGING, self._onCellChanging)
         self.Bind(wx.EVT_SIZE, self._onResized)
         self.Bind(wx.grid.EVT_GRID_CELL_RIGHT_CLICK, self._showContextMenu)
+        gui.mainFrame.MainFrame.getInstance().Bind(GE.SETUPS_CHANGED, self._onSetupsChanged)
 
 
     def _onResized(self, event):
@@ -46,6 +50,11 @@ class SetupsList(Grid):
         for i,setup in enumerate(setups):
             self._updateSetupRow(i, setup)
         self._insertAddSetupRow(setupCount)
+
+
+    def _onSetupsChanged(self, event):
+        self.showSetups(self._setups) # When the setups change only the contents of this list change
+        event.Skip()
 
 
     def _isSetupRow(self, row):
