@@ -92,6 +92,7 @@ _exceptionalShipPointValues = [
     ({"Scythe", "Augoror", "Osprey", "Exequror"}, T1_SUPPORT_CRUISER),
     ({"Bellicose", "Arbitrator", "Blackbird", "Celestis"}, T1_DISRUPTION_CRUISER),
     ({"Oracle", "Naga", "Talos", "Tornado"}, ATTACK_BC),
+    ({"Purifier", "Manticore", "Nemesis", "Hound"}, STEALTH_BOMBER), # SBs are under the Covert Ops market group for some reason
     ({"Praxis"}, PRAXIS),
     ({"Gnosis"}, GNOSIS),
     ({"Sunesis"}, SUNESIS),
