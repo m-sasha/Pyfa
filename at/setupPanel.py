@@ -51,7 +51,6 @@ class SetupPanel(Panel):
         grid.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self._onCellLeftClick)
         gui.mainFrame.MainFrame.getInstance().Bind(GE.FIT_CHANGED, self._onFitChanged)
 
-
         shipCountLabel = wx.StaticText(self)
         pointCountLabel = wx.StaticText(self)
         dpsLabel = wx.StaticText(self)
@@ -93,11 +92,15 @@ class SetupPanel(Panel):
 
         shipCount = len(setup.ships)
         grid.AppendRows(shipCount)
-        for i,setupShip in enumerate(setup.ships):
+        for i in range(0, len(setup.ships)):
             self._updateShipRow(i, updateShipInfo=False)
         self._insertAddShipRow()
 
         self._updateSetupInfo()
+        self._grid.AutoSizeColumn(_SHIP_COL)
+        self._grid.AutoSizeColumn(_FIT_COL)
+        if self._grid.GetColSize(_FIT_COL) < 100:
+            self._grid.SetColSize(_FIT_COL, 100)
 
 
     @property
@@ -210,6 +213,7 @@ class SetupPanel(Panel):
         self._setup.ships.append(ship)
         self._updateShipRow(event.GetRow())
         self._insertAddShipRow()
+        self._grid.AutoSizeColumn(_SHIP_COL)
 
         pass
 
@@ -228,6 +232,7 @@ class SetupPanel(Panel):
         ship.shipId = newShip.typeID
         ship.fitId = None
         self._updateShipRow(row)
+        self._grid.AutoSizeColumn(_SHIP_COL)
 
 
     def _onChoosingFit(self, event: wx.grid.GridEvent):
@@ -245,12 +250,14 @@ class SetupPanel(Panel):
 
         ship.fitId = fitId
         self._updateShipRow(event.GetRow())
+        self._grid.AutoSizeColumn(_SHIP_COL)
 
 
     def _onFitChanged(self, event):
         row = self._rowOfFit(event.fitID)
         if row is not None:
             self._updateShipRow(row)
+            self._grid.AutoSizeColumn(_SHIP_COL)
         event.Skip()
 
 
