@@ -1,5 +1,6 @@
 from typing import List
 from service.settings import SettingsProvider
+from eos.saveddata.fit import Fit
 
 
 class SetupShip(object):
@@ -10,6 +11,11 @@ class SetupShip(object):
         self.shipId = shipId
         self.fitId = fitId
         self.active = active
+
+    @classmethod
+    def fromFit(cls, fit: Fit, active=True) -> 'SetupShip':
+        return SetupShip(fit.shipID, fit.ID, active)
+
 
 
     def toggleActive(self):

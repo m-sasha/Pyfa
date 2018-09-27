@@ -165,31 +165,95 @@ class ImportFromZKillboardThread(threading.Thread):
     def run(self):
         with urllib.request.urlopen(self.url) as response:
             killmails = json.loads(response.read())
+            killmails.sort(key=lambda km: km["killmail_time"])
 
-            for count,killmail in enumerate(killmails):
-                try:
-                    Port.importZKillboard(killmail, ImportFromZKillboardThread.chooseFitName)
+            from datetime import datetime
+            TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+
+            # System ids to the fights that occurred in them, in time order
+            # Fight is a ({ticker1, ticker2}, list[(killmail, fit)])
+            from collections import defaultdict
+            fightsBySystem = defaultdict(list)
+            try:
+                for count,killmail in enumerate(killmails):
+                    # Import the fit
+                    fit = Port.importZKillboard(killmail, ImportFromZKillboardThread.chooseFitName)
+
+                    # Group the killmails by fight
+                    systemId = killmail["solar_system_id"]
+                    fightsInSystem = fightsBySystem[systemId]
+                    victimTicker = self.victimTicker(killmail)
+                    attackerTicker = self.attackerTicker(killmail)
+                    lastFightInSystem = fightsInSystem[-1] if (len(fightsInSystem) > 0) else None
+                    lastKillmailTime = datetime.strptime(lastFightInSystem[1][-1][0]["killmail_time"], TIME_FORMAT) if lastFightInSystem is not None else None
+                    thisKillmailTime = datetime.strptime(killmail["killmail_time"], TIME_FORMAT)
+                    if (lastFightInSystem is None) or (lastFightInSystem[0] != {victimTicker, attackerTicker}) or \
+                            (thisKillmailTime - lastKillmailTime).total_seconds() > 60*10:
+                        lastFightInSystem = ({victimTicker, attackerTicker}, list())
+                        fightsInSystem.append(lastFightInSystem)
+                    lastFightInSystem[1].append((killmail, fit))
+
                     wx.CallAfter(lambda: self.progressCallback("Processed %d killmails" % (count+1)))
-                except Exception as ex:
-                    errorMsg = str(ex)
-                    wx.CallAfter(lambda: self.doneCallback("Error processing killmail %d: %s" % (killmail["killmail_id"], errorMsg)))
-                    return
+
+                # Import the setups
+                import itertools
+                from at.setup import Setup, SetupShip, StoredSetups
+                fights = itertools.chain.from_iterable(fightsBySystem.values())
+                for fight in fights:
+                    for ticker1 in fight[0]:
+                        ticker2 = next(iter(fight[0] - {ticker1}))
+                        setup = Setup("%s vs %s" % (ticker1, ticker2))
+
+                        # Add ships who died
+                        addedCharacters = set()
+                        for killmail, fit in fight[1]:
+                            if self.victimTicker(killmail) == ticker1:
+                                setup.ships.append(SetupShip.fromFit(fit))
+                                addedCharacters.add(killmail["victim"]["character_id"])
+
+                        # Add ships which didn't die
+                        for killmail, fit in fight[1]:
+                            if self.victimTicker(killmail) != ticker1:
+                                for attacker in killmail["attackers"]:
+                                    attackerId = attacker["character_id"]
+                                    if (attackerId not in addedCharacters) and \
+                                            self.charTickerAtTime(attackerId, killmail["killmail_time"]) == ticker1:
+                                        setup.ships.append(SetupShip(attacker["ship_type_id"]))
+                                        addedCharacters.add(attackerId)
+
+                        StoredSetups.addSetup(setup)
+
+            except Exception as ex:
+                errorMsg = str(ex)
+                wx.CallAfter(lambda: self.doneCallback("Error processing killmail %d: %s" % (killmail["killmail_id"], errorMsg)))
+                return
+
             wx.CallAfter(lambda: self.doneCallback("Processed %d killmails" % (count+1)))
 
 
     @staticmethod
     def chooseFitName(killmail, fit):
-        victimId = killmail["victim"]["character_id"]
-        attackerId = max(killmail["attackers"], key=itemgetter("damage_done"))["character_id"] # The attacker with the highest damage
-        killTime = killmail["killmail_time"]
-
-        victimTicker = ImportFromZKillboardThread.getCharacterTickerAtTime(victimId, killTime)
-        attackerTicker = ImportFromZKillboardThread.getCharacterTickerAtTime(attackerId, killTime)
+        victimTicker = ImportFromZKillboardThread.victimTicker(killmail)
+        attackerTicker = ImportFromZKillboardThread.attackerTicker(killmail)
         return "%s vs %s" % (victimTicker, attackerTicker)
 
 
     @staticmethod
-    def getCharacterTickerAtTime(characterId, killTime: str):
+    def victimTicker(killmail):
+        victimId = killmail["victim"]["character_id"]
+        killTime = killmail["killmail_time"]
+        return ImportFromZKillboardThread.charTickerAtTime(victimId, killTime)
+
+
+    @staticmethod
+    def attackerTicker(killmail):
+        attackerId = max(killmail["attackers"], key=itemgetter("damage_done"))["character_id"] # The attacker with the highest damage
+        killTime = killmail["killmail_time"]
+        return ImportFromZKillboardThread.charTickerAtTime(attackerId, killTime)
+
+
+    @staticmethod
+    def charTickerAtTime(characterId, killTime: str):
         """Find the corp the victim was in at the time of the killmail"""
         corpHistory = esiapi.fetchCorpHistory(characterId)
         corpId = next(corp["corporation_id"] for corp in corpHistory if corp["start_date"] < killTime)
@@ -821,7 +885,8 @@ class MainFrame(wx.Frame):
 
     def importFromZKillboard(self, event):
         dlg = wx.TextEntryDialog(self, "zkillboard.com API URL", "ZKillboard URL")
-        dlg.ShowModal()
+        if dlg.ShowModal() != wx.ID_OK:
+            return
         url = dlg.GetValue()
         dlg.Destroy()
         self.waitDialog = wx.BusyInfo("Loading killmails from %s" % url)
