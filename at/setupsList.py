@@ -26,6 +26,7 @@ class SetupsList(Grid):
         self.Bind(wx.grid.EVT_GRID_SELECT_CELL, self._onCellSelected)
         self.Bind(wx.grid.EVT_GRID_CELL_CHANGING, self._onCellChanging)
         self.Bind(wx.EVT_SIZE, self._onResized)
+        self.Bind(wx.grid.EVT_GRID_CELL_RIGHT_CLICK, self._showContextMenu)
 
 
     def _onResized(self, event):
@@ -47,6 +48,10 @@ class SetupsList(Grid):
         self._insertAddSetupRow(setupCount)
 
 
+    def _isSetupRow(self, row):
+        return row < len(self._setups)
+
+
     def _updateSetupRow(self, row, setup: Setup):
         self.SetCellValue(row, 0, setup.name)
 
@@ -60,7 +65,7 @@ class SetupsList(Grid):
         row = event.GetRow()
         col = event.GetCol()
         self.SelectBlock(row, col, row, col)
-        if row < len(self._setups):
+        if self._isSetupRow(row):
             self._owner.onSetupSelected(row)
         else:
             self._owner.onNoSetupSelected()
@@ -68,16 +73,17 @@ class SetupsList(Grid):
 
     def _onCellChanging(self, event: wx.grid.GridEvent):
         row = event.GetRow()
-        if row < len(self._setups):
+        if self._isSetupRow(row):
             self._onRenameSetup(event)
         else:
             self._onAddSetup(event)
+
 
     def _onRenameSetup(self, event: wx.grid.GridEvent):
         row = event.GetRow()
         setup = self._setups[event.GetRow()]
         setup.name = event.GetString()
-        self._updateSetupRow(row)
+        self._updateSetupRow(row, setup)
 
 
     def _onAddSetup(self, event: wx.grid.GridEvent):
@@ -87,3 +93,35 @@ class SetupsList(Grid):
         self._updateSetupRow(row, setup)
         self._insertAddSetupRow(row + 1)
         self._onCellSelected(event)
+
+
+    def _showContextMenu(self, event: wx.grid.GridEvent):
+        row = event.GetRow()
+        if not self._isSetupRow(row):
+            return
+
+        if not row in self.SelectedRows:
+            self.SelectRow(row)
+
+        if not hasattr(self, "removeSetupId"):
+            self.removeSetupId = wx.NewId()
+
+        menu = wx.Menu()
+
+        removeSetupItem : wx.MenuItem = menu.Append(self.removeSetupId, "Remove Setup(s)")
+        self.Bind(wx.EVT_MENU, lambda _ : self._onRemoveSetups(self.SelectedRows), removeSetupItem)
+
+        self.PopupMenu(menu)
+        menu.Destroy()
+
+
+    def _onRemoveSetups(self, rows):
+        confirmDialog = wx.MessageDialog(self, "Delete %d setup(s)?" % len(rows), "Delete Setup(s)", style=wx.YES|wx.NO)
+        confirmDialog.SetYesNoLabels("Delete Setup(s)", "Cancel")
+        if confirmDialog.ShowModal() != wx.ID_YES:
+            return
+
+        for row in reversed(rows):
+            del self._setups[row]
+        self.showSetups(self._setups)
+        self.ClearSelection()
