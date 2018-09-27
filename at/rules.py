@@ -156,10 +156,10 @@ _pointValuesByMarketGroupName = {
             "Advanced Battleships": {
                 "Black Ops": BLACK_OPS,
                 "Marauders": MARAUDER,
-                "Faction Battleships": {
-                    "Navy Faction": NAVY_FACTION_BS,
-                    "Pirate Faction": PIRATE_FACTION_BS
-                }
+            },
+            "Faction Battleships": {
+                "Navy Faction": NAVY_FACTION_BS,
+                "Pirate Faction": PIRATE_FACTION_BS
             }
         },
         "Industrial Ships": {
