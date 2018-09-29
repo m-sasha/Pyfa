@@ -560,7 +560,7 @@ def isGroupAllowed(group: eos.gamedata.Group):
     categoryName = group.category.name
     if categoryName == "Ship":
         return isShipGroupAllowed(group)
-    return False
+    return True
 
 
 _disallowedToplevelMarketGroups = {

@@ -11,3 +11,4 @@ packaging
 roman
 beautifulsoup4
 PyYAML
+simanneal
