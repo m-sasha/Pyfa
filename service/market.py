@@ -732,9 +732,9 @@ class Market(object):
         return root
 
     def getShipRoot(self):
-        cat1 = self.getCategory("Ship")
-        cat2 = self.getCategory("Structure")
-        root = set(self.getGroupsByCategory(cat1) | self.getGroupsByCategory(cat2))
+        ships = self.getCategory("Ship")
+        # cat2 = self.getCategory("Structure")
+        root = self.getGroupsByCategory(ships)
 
         return root
 
