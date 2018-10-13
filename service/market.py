@@ -17,8 +17,9 @@
 # along with pyfa.  If not, see <http://www.gnu.org/licenses/>.
 # ===============================================================================
 
-import re
+import queue
 import threading
+from collections import OrderedDict
 from logbook import Logger
 import queue
 import sys
@@ -26,17 +27,16 @@ from itertools import chain
 
 # noinspection PyPackageRequirements
 import wx
+from logbook import Logger
 from sqlalchemy.sql import or_
 
 import config
 import eos.db
-from service import conversions
-from service.settings import SettingsProvider
-from service.jargon import JargonLoader
-
 from eos.gamedata import Category as types_Category, Group as types_Group, Item as types_Item, MarketGroup as types_MarketGroup, \
     MetaGroup as types_MetaGroup, MetaType as types_MetaType
-from collections import OrderedDict
+from service import conversions
+from service.jargon import JargonLoader
+from service.settings import SettingsProvider
 
 import at.rules
 
@@ -742,7 +742,6 @@ class Market(object):
         """Get ships for given group id"""
         grp = self.getGroup(grpid, eager=("items", "items.group", "items.marketGroup"))
         ships = self.getItemsByGroup(grp)
-
         return ships
 
     def getShipListDelayed(self, id_, callback):

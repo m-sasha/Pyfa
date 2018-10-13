@@ -19,17 +19,14 @@
 
 import io
 import os.path
-import zipfile
 from collections import OrderedDict
 
 # noinspection PyPackageRequirements
 import wx
+from logbook import Logger
 
 import config
 
-import gui.mainFrame as mainFrame
-
-from logbook import Logger
 logging = Logger(__name__)
 
 
@@ -47,6 +44,8 @@ class BitmapLoader(object):
     cached_bitmaps = OrderedDict()
     dont_use_cached_bitmaps = False
     max_cached_bitmaps = 500
+
+    scaling_factor = None
 
     @classmethod
     def getStaticBitmap(cls, name, parent, location):
@@ -78,18 +77,24 @@ class BitmapLoader(object):
 
     @classmethod
     def loadBitmap(cls, name, location):
-        filename = "{0}.png".format(name)
-        scale = int(mainFrame.MainFrame.getInstance().GetContentScaleFactor())
-        if scale == 1:
-            img = cls.loadImage(filename, location)
-        else:
-            filenameScaled = "{0}@{1}x.png".format(name, scale)
-            img = cls.loadImage(filenameScaled, location)
-            if img is None:
-                img = cls.loadImage(filename, location)
-                scale = 1
+        if cls.scaling_factor is None:
+            import gui.mainFrame
+            cls.scaling_factor = int(gui.mainFrame.MainFrame.getInstance().GetContentScaleFactor())
+        scale = cls.scaling_factor
+
+        filenameScaled = "{0}@{1}x.png".format(name, scale)
+        img = cls.loadImage(filenameScaled, location)
+
         if img is None:
+            # can't find the scaled image, fallback to no scaling
+            filename = "{0}.png".format(name)
+            img = cls.loadImage(filename, location)
+            scale = 1
+
+        if img is None:
+            print(("Missing icon file: {0}/{1}".format(location, filename)))
             return None
+
         bmp: wx.Bitmap = img.ConvertToBitmap()
         if scale > 1:
             bmp.SetSize((int(bmp.GetWidth()/scale), int(bmp.GetHeight()/scale)))
@@ -114,4 +119,4 @@ class BitmapLoader(object):
             if os.path.exists(path):
                 return wx.Image(path)
             else:
-                print(("Missing icon file: {0}".format(path)))
+                return None

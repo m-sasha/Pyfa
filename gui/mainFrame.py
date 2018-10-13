@@ -17,23 +17,25 @@
 # along with pyfa.  If not, see <http://www.gnu.org/licenses/>.
 # =============================================================================
 
-import sys
+import datetime
 import os.path
+import threading
+import time
+import webbrowser
+from codecs import open
+from time import gmtime, strftime
 from typing import Optional, Any
 from operator import itemgetter
 
 from logbook import Logger
 
-import sqlalchemy
 # noinspection PyPackageRequirements
 import wx
+import wx.adv
+from logbook import Logger
 # noinspection PyPackageRequirements
-from wx.lib.wordwrap import wordwrap
 # noinspection PyPackageRequirements
 from wx.lib.inspection import InspectionTool
-import time
-
-from codecs import open
 
 import config
 
@@ -46,28 +48,37 @@ import json
 import gui.aboutData
 from gui.chrome_tabs import ChromeNotebook
 import gui.globalEvents as GE
-
-from gui.bitmap_loader import BitmapLoader
-from gui.mainMenuBar import MainMenuBar
+from eos.config import gamedata_date, gamedata_version
+from eos.db.saveddata.loadDefaultDatabaseValues import DefaultDatabaseValues
+from eos.db.saveddata.queries import getFit as db_getFit
+# import this to access override setting
+from eos.modifiedAttributeDict import ModifiedAttributeDict
+from gui import graphFrame
 from gui.additionsPane import AdditionsPane
-from gui.marketBrowser import MarketBrowser
+from gui.bitmap_loader import BitmapLoader
 from gui.builtinMarketBrowser.events import ItemSelected
-from gui.multiSwitch import MultiSwitch
-from gui.statsPane import StatsPane
-from gui.shipBrowser import ShipBrowser
 from gui.builtinShipBrowser.events import FitSelected, ImportSelected, Stage3Selected
+# noinspection PyUnresolvedReferences
+from gui.builtinViews import emptyView, entityEditor, fittingView, implantEditor  # noqa: F401
 from gui.characterEditor import CharacterEditor
 from gui.characterSelection import CharacterSelection
+from gui.chrome_tabs import ChromeNotebook
+from gui.copySelectDialog import CopySelectDialog
+from gui.devTools import DevTools
+from gui.esiFittings import EveFittings, ExportToEve, SsoCharacterMgmt
+from gui.graphFrame import GraphFrame
+from gui.mainMenuBar import MainMenuBar
+from gui.marketBrowser import MarketBrowser
+from gui.multiSwitch import MultiSwitch
 from gui.patternEditor import DmgPatternEditorDlg
+from gui.preferenceDialog import PreferenceDialog
 from gui.resistsEditor import ResistsEditorDlg
 from gui.setEditor import ImplantSetEditorDlg
-from gui.devTools import DevTools
-from gui.preferenceDialog import PreferenceDialog
-from gui.graphFrame import GraphFrame
+from gui.shipBrowser import ShipBrowser
 from gui.ssoLogin import SsoLogin
-from gui.copySelectDialog import CopySelectDialog
-from gui.utils.clipboard import toClipboard, fromClipboard
+from gui.statsPane import StatsPane
 from gui.updateDialog import UpdateDialog
+from gui.utils.clipboard import fromClipboard, toClipboard
 # noinspection PyUnresolvedReferences
 from gui.builtinViews import emptyView, entityEditor, fittingView, implantEditor  # noqa: F401
 from gui.utils.exportStats import statsExportText
@@ -76,15 +87,18 @@ from gui import graphFrame
 from service.settings import SettingsProvider
 from service.fit import Fit
 from service.character import Character
-from service.update import Update
+from service.esi import Esi, LoginMethod
 from service.esiAccess import SsoMode
+from service.fit import Fit
+from service.port import EfsPort, IPortUser, Port
+from service.settings import HTMLExportSettings, SettingsProvider
+from service.update import Update
 
 # import this to access override setting
 from eos.modifiedAttributeDict import ModifiedAttributeDict
 from eos.db.saveddata.loadDefaultDatabaseValues import DefaultDatabaseValues
 from eos.db.saveddata.queries import getFit as db_getFit
 from service.port import Port, IPortUser
-from service.efsPort import EfsPort
 from service.settings import HTMLExportSettings
 
 from time import gmtime, strftime
@@ -280,6 +294,7 @@ class MainFrame(wx.Frame):
         pyfalog.debug("Initialize MainFrame")
         self.title = title
         wx.Frame.__init__(self, None, wx.ID_ANY, self.title)
+        self.supress_left_up = False
 
         MainFrame.__instance = self
 
@@ -372,6 +387,10 @@ class MainFrame(wx.Frame):
 
         self.Bind(GE.EVT_SSO_LOGIN, self.onSSOLogin)
         self.Bind(GE.EVT_SSO_LOGGING_IN, self.ShowSsoLogin)
+
+    @property
+    def command(self) -> wx.CommandProcessor:
+        return Fit.getCommandProcessor(self.getActiveFit())
 
     def ShowSsoLogin(self, event):
         if getattr(event, "login_mode", LoginMethod.SERVER) == LoginMethod.MANUAL and getattr(event, "sso_mode", SsoMode.AUTO) == SsoMode.AUTO:
@@ -570,6 +589,7 @@ class MainFrame(wx.Frame):
                             style=wx.FD_SAVE,
                             defaultFile=defaultFile)
         if dlg.ShowModal() == wx.ID_OK:
+            self.supress_left_up = True
             format_ = dlg.GetFilterIndex()
             path = dlg.GetPath()
             if format_ == 0:
@@ -654,6 +674,10 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.showPreferenceDialog, id=wx.ID_PREFERENCES)
         # User guide
         self.Bind(wx.EVT_MENU, self.goWiki, id=menuBar.wikiId)
+
+        self.Bind(wx.EVT_MENU, lambda evt: MainFrame.getInstance().command.Undo(), id=wx.ID_UNDO)
+
+        self.Bind(wx.EVT_MENU, lambda evt: MainFrame.getInstance().command.Redo(), id=wx.ID_REDO)
         # EVE Forums
         self.Bind(wx.EVT_MENU, self.goForums, id=menuBar.forumId)
         # Save current character
@@ -843,31 +867,31 @@ class MainFrame(wx.Frame):
         else:
             self.marketBrowser.search.Focus()
 
-    def clipboardEft(self):
+    def clipboardEft(self, options):
         fit = db_getFit(self.getActiveFit())
-        toClipboard(Port.exportEft(fit))
+        toClipboard(Port.exportEft(fit, options))
 
-    def clipboardEftImps(self):
+    def clipboardEftImps(self, options):
         fit = db_getFit(self.getActiveFit())
         toClipboard(Port.exportEftImps(fit))
 
-    def clipboardDna(self):
+    def clipboardDna(self, options):
         fit = db_getFit(self.getActiveFit())
         toClipboard(Port.exportDna(fit))
 
-    def clipboardEsi(self):
+    def clipboardEsi(self, options):
         fit = db_getFit(self.getActiveFit())
         toClipboard(Port.exportESI(fit))
 
-    def clipboardXml(self):
+    def clipboardXml(self, options):
         fit = db_getFit(self.getActiveFit())
         toClipboard(Port.exportXml(None, fit))
 
-    def clipboardMultiBuy(self):
+    def clipboardMultiBuy(self, options):
         fit = db_getFit(self.getActiveFit())
         toClipboard(Port.exportMultiBuy(fit))
 
-    def clipboardEfs(self):
+    def clipboardEfs(self, options):
         fit = db_getFit(self.getActiveFit())
         toClipboard(EfsPort.exportEfs(fit, 0))
 
@@ -899,7 +923,7 @@ class MainFrame(wx.Frame):
 
     def exportToClipboard(self, event):
         CopySelectDict = {CopySelectDialog.copyFormatEft: self.clipboardEft,
-                          CopySelectDialog.copyFormatEftImps: self.clipboardEftImps,
+                          # CopySelectDialog.copyFormatEftImps: self.clipboardEftImps,
                           CopySelectDialog.copyFormatXml: self.clipboardXml,
                           CopySelectDialog.copyFormatDna: self.clipboardDna,
                           CopySelectDialog.copyFormatEsi: self.clipboardEsi,
@@ -908,8 +932,13 @@ class MainFrame(wx.Frame):
         dlg = CopySelectDialog(self)
         dlg.ShowModal()
         selected = dlg.GetSelected()
+        options = dlg.GetOptions()
 
-        CopySelectDict[selected]()
+        settings = SettingsProvider.getInstance().getSettings("pyfaExport")
+        settings["format"] = selected
+        settings["options"] = options
+
+        CopySelectDict[selected](options)
 
         try:
             dlg.Destroy()
@@ -1140,6 +1169,7 @@ class MainFrame(wx.Frame):
         )
 
         if dlg.ShowModal() == wx.ID_OK:
+            self.supress_left_up = True
             self.waitDialog = wx.BusyInfo("Importing Character...")
             sCharacter = Character.getInstance()
             sCharacter.importCharacter(dlg.GetPaths(), self.importCharacterCallback)

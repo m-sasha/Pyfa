@@ -35,7 +35,6 @@ from eos.saveddata.character import Character
 from eos.saveddata.citadel import Citadel
 from eos.saveddata.module import Module, State, Slot, Hardpoint
 from logbook import Logger
-
 pyfalog = Logger(__name__)
 
 
@@ -258,11 +257,11 @@ class Fit(object):
     def projectedFits(self):
         # only in extreme edge cases will the fit be invalid, but to be sure do
         # not return them.
-        return [fit for fit in list(self.__projectedFits.values()) if not fit.isInvalid]
+        return [fit for fit in list(self.projectedFitDict.values()) if not fit.isInvalid]
 
     @property
     def commandFits(self):
-        return [fit for fit in list(self.__commandFits.values()) if not fit.isInvalid]
+        return [fit for fit in list(self.commandFitDict.values()) if not fit.isInvalid]
 
     def getProjectionInfo(self, fitID):
         return self.projectedOnto.get(fitID, None)
@@ -675,15 +674,13 @@ class Fit(object):
                     self.modules.filteredItemBoost(lambda mod: mod.item.requiresSkill("Remote Armor Repair Systems"),
                                                    "armorDamageAmount", value, stackingPenalties=True)
 
-                if warfareBuffID == 88:  # AOE_Beacon_filament_cloud_shield_booster
-                    self.modules.filteredItemBoost(lambda mod: mod.item.requiresSkill("Shield Operation") or
-                                                               mod.item.requiresSkill("Shield Emission Systems"),
-                                                   "capacitorNeed", value, stackingPenalties=True)
+                if warfareBuffID == 88:  # AOE_Beacon_filament_cloud_shield_booster_shield_bonus
+                    self.modules.filteredItemBoost(lambda mod: mod.item.requiresSkill("Shield Operation"),
+                                                   "shieldBonus", value, stackingPenalties=True)
 
-                if warfareBuffID == 89:  # AOE_Beacon_filament_cloud_ancillary_charge_usage
-                    self.modules.filteredItemBoost(lambda mod: mod.item.requiresSkill("Shield Operation") or
-                                                               mod.item.requiresSkill("Shield Emission Systems"),
-                                                   "chargeRate", value, stackingPenalties=True)
+                if warfareBuffID == 89:  # AOE_Beacon_filament_cloud_shield_booster_duration
+                    self.modules.filteredItemBoost(lambda mod: mod.item.requiresSkill("Shield Operation"),
+                                                   "duration", value, stackingPenalties=True)
 
                 # Abysmal Weather Effects
 
@@ -903,6 +900,9 @@ class Fit(object):
         Fill this fit's module slots with enough dummy slots so that all slots are used.
         This is mostly for making the life of gui's easier.
         GUI's can call fill() and then stop caring about empty slots completely.
+
+        todo: want to get rid of using this from the gui/commands, and instead make it a more built-in feature within
+        recalc. Figure out a way to keep track of any changes to slot layout and call this automatically
         """
         if self.ship is None:
             return
@@ -1599,7 +1599,7 @@ class Fit(object):
             eos.db.saveddata_session.refresh(fit)
 
         for fit in self.commandFits:
-            copy_ship.__commandFits[fit.ID] = fit
+            copy_ship.commandFitDict[fit.ID] = fit
             forceUpdateSavedata(fit)
             copyCommandInfo = fit.getCommandInfo(copy_ship.ID)
             originalCommandInfo = fit.getCommandInfo(self.ID)
@@ -1607,7 +1607,7 @@ class Fit(object):
             forceUpdateSavedata(fit)
 
         for fit in self.projectedFits:
-            copy_ship.__projectedFits[fit.ID] = fit
+            copy_ship.projectedFitDict[fit.ID] = fit
             forceUpdateSavedata(fit)
             copyProjectionInfo = fit.getProjectionInfo(copy_ship.ID)
             originalProjectionInfo = fit.getProjectionInfo(self.ID)
