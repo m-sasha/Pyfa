@@ -197,7 +197,7 @@ class ImportFromZKillboardThread(threading.Thread):
             try:
                 for count,killmail in enumerate(killmails):
                     # Import the fit
-                    fit = Port.importZKillboard(killmail, ImportFromZKillboardThread.chooseFitName)
+                    fit = Port.importKillmail(killmail, ImportFromZKillboardThread.chooseFitName)
 
                     # Group the killmails by fight
                     systemId = killmail["solar_system_id"]

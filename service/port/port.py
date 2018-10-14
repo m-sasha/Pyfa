@@ -33,8 +33,7 @@ from eos.saveddata.fit import ImplantLocation, Fit
 from service.fit import Fit as svcFit
 from service.port.dna import exportDna, importDna
 from service.port.eft import exportEft, importEft, importEftCfg
-from service.port.esi import exportESI, importESI
-from service.port.zkillboard import importZKillboard
+from service.port.esi import exportESI, importESI, importKillmail
 from service.port.multibuy import exportMultiBuy
 from service.port.shared import IPortUser, UserCancelException, processing_notify, saveImportedFit
 from service.port.xml import importXml, exportXml
@@ -254,6 +253,10 @@ class Port(object):
     def exportESI(fit):
         return exportESI(fit)
 
+    @staticmethod
+    def importKillmail(killmail, fitNameFunction=lambda killmail, fit: fit.ship.item.name) -> Fit or None:
+        return importKillmail(killmail, fitNameFunction)
+
     # XML-related methods
     @staticmethod
     def importXml(text, iportuser=None):
@@ -262,12 +265,6 @@ class Port(object):
     @staticmethod
     def exportXml(iportuser=None, *fits):
         return exportXml(iportuser, *fits)
-
-
-    # Zkillboard-related methods
-    @staticmethod
-    def importZKillboard(killmail, fitNameFunction=lambda killmail, fit: fit.ship.item.name) -> Fit or None:
-        return importZKillboard(killmail, fitNameFunction)
 
     # Multibuy-related methods
     @staticmethod
