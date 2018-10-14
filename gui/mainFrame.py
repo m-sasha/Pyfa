@@ -167,6 +167,7 @@ class OpenFitsThread(threading.Thread):
         wx.CallAfter(self.callback)
 
 
+# Example URL: https://zkillboard.com/api/regionID/10000004/year/2018/month/08/allianceID/1614483120/
 class ImportFromZKillboardThread(threading.Thread):
     def __init__(self, url, progressCallback, doneCallback):
         threading.Thread.__init__(self)
@@ -179,7 +180,11 @@ class ImportFromZKillboardThread(threading.Thread):
     def run(self):
         with urllib.request.urlopen(self.url) as response:
             wx.CallAfter(lambda: self.progressCallback("Loading killmails"))
-            killmails = json.loads(response.read())
+            km_ids_and_hashes = [(km["killmail_id"], km["zkb"]["hash"]) for km in json.loads(response.read())]
+            killmails = []
+            for count, (km_id,km_hash) in enumerate(km_ids_and_hashes):
+                wx.CallAfter(lambda: self.progressCallback("Loading killmail %d/%d" % (count+1, len(km_ids_and_hashes))))
+                killmails.append(esiapi.fetchKillmail(km_id, km_hash))
             killmails.sort(key=lambda km: km["killmail_time"])
 
             from datetime import datetime

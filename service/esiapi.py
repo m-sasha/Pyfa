@@ -10,6 +10,7 @@ class Endpoints:
     CORPORATION = "/v4/corporations/{corporation_id}/"
     ALLIANCE = "/v3/alliances/{alliance_id}/"
     ALLIANCE_HISTORY = "/v2/corporations/{corporation_id}/alliancehistory/"
+    KILLMAIL = "/v1/killmails/{killmail_id}/{killmail_hash}/"
 
 
 _cache = dict()
@@ -46,3 +47,6 @@ def fetchAllianceInfo(allianceId):
 
 def fetchAllianceHistory(corpId):
     return _fetchAsJson(Endpoints.ALLIANCE_HISTORY, corporation_id=corpId)
+
+def fetchKillmail(killmail_id, killmail_hash):
+    return _fetchAsJson(Endpoints.KILLMAIL, killmail_id=killmail_id, killmail_hash=killmail_hash)
