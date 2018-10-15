@@ -1,4 +1,5 @@
-import urllib.request
+import urllib3
+import certifi
 import json
 import config
 
@@ -13,6 +14,7 @@ class Endpoints:
     KILLMAIL = "/v1/killmails/{killmail_id}/{killmail_hash}/"
 
 
+http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
 _cache = dict()
 
 def _fetchAsJson(endpoint, **kwargs):
@@ -22,12 +24,12 @@ def _fetchAsJson(endpoint, **kwargs):
         return _cache[url]
 
     headers = {"Accept" : "text/html",
-               "User-Agent": "PyfaAT v{}".format(config.version)}
-    request = urllib.request.Request(url, headers=headers)
-    with urllib.request.urlopen(request, timeout=10) as response:
-        data = json.loads(response.read())
-        _cache[url] = data
-        return data
+               "User-Agent": "PyfaAT v{}".format(config.version),
+               "Accept-Encoding": "gzip"}
+    response = http.request('GET', url, headers=headers)
+    data = json.loads(response.data.decode('utf-8'))
+    _cache[url] = data
+    return data
 
 def fetchCharacterInfo(characterId):
     return _fetchAsJson(Endpoints.CHARACTER, character_id=characterId)
