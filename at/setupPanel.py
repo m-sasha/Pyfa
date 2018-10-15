@@ -49,6 +49,7 @@ class SetupPanel(Panel):
         grid.Bind(wx.grid.EVT_GRID_CELL_CHANGING, self._onCellChanging)
         grid.Bind(wx.grid.EVT_GRID_CELL_RIGHT_CLICK, self._showContextMenu)
         grid.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self._onCellLeftClick)
+        grid.Bind(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self._onCellDoubleLeftClick)
         gui.mainFrame.MainFrame.getInstance().Bind(GE.FIT_CHANGED, self._onFitChanged)
 
         shipCountLabel = wx.StaticText(self)
@@ -300,6 +301,16 @@ class SetupPanel(Panel):
             self._updateShipRow(row)
         event.Skip()
 
+
+    def _onCellDoubleLeftClick(self, event: wx.grid.GridEvent):
+        row = event.GetRow()
+        col = event.GetCol()
+        if self._grid.IsReadOnly(row, col):
+            self._grid.SelectRow(row)
+            fitId = self._getShip(row).fitId
+            self._onOpenFit(fitId, event.AltDown())
+        else:
+            event.Skip()
 
     @staticmethod
     def _onOpenFit(fitId, inNewTab):
