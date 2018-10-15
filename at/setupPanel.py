@@ -17,8 +17,9 @@ _FIT_COL = 1
 _POINTS_COL = 2
 _EHP_COL = 3
 _DPS_COL = 4
-_ACTIVE_COL = 5
-_TOTAL_COLS = 6
+_TANK_COL = 5
+_ACTIVE_COL = 6
+_TOTAL_COLS = 7
 
 class SetupPanel(Panel):
 
@@ -42,6 +43,7 @@ class SetupPanel(Panel):
         grid.SetColLabelValue(_POINTS_COL, "Points")
         grid.SetColLabelValue(_EHP_COL, "EHP")
         grid.SetColLabelValue(_DPS_COL, "DPS")
+        grid.SetColLabelValue(_TANK_COL, "Tank")
         grid.SetColLabelValue(_ACTIVE_COL, "Active?")
 
         grid.SetColFormatBool(_ACTIVE_COL)
@@ -152,16 +154,20 @@ class SetupPanel(Panel):
             grid.SetCellValue(row, _FIT_COL, fit.name)
             grid.SetCellValue(row, _EHP_COL, formatAmount(fit.totalEHP, 3, 0, 9))
             grid.SetCellValue(row, _DPS_COL, formatAmount(fit.totalDPS, 3, 0, 0))
+            grid.SetCellValue(row, _TANK_COL, formatAmount(max(fit.effectiveTank.values()), 3, 0, 9))
+
         grid.SetCellValue(row, _ACTIVE_COL, "1" if setupShip.active else "0")
 
         grid.SetReadOnly(row, _POINTS_COL)
         grid.SetReadOnly(row, _EHP_COL)
         grid.SetReadOnly(row, _DPS_COL)
+        grid.SetReadOnly(row, _TANK_COL)
         grid.SetReadOnly(row, _ACTIVE_COL)
 
         grid.SetCellAlignment(row, _POINTS_COL, wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
         grid.SetCellAlignment(row, _EHP_COL, wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
         grid.SetCellAlignment(row, _DPS_COL, wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
+        grid.SetCellAlignment(row, _TANK_COL, wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
         grid.SetCellAlignment(row, _ACTIVE_COL, wx.ALIGN_CENTER, wx.ALIGN_CENTER)
 
         if updateShipInfo:
