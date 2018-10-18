@@ -223,6 +223,7 @@ class ImportFromZKillboardThread(threading.Thread):
                     for ticker1 in fight[0]:
                         ticker2 = next(iter(fight[0] - {ticker1}))
                         setup = Setup("%s vs %s" % (ticker1, ticker2))
+                        fits = []
 
                         # Add ships who died
                         addedCharacters = set()
@@ -230,6 +231,7 @@ class ImportFromZKillboardThread(threading.Thread):
                             if self.victimTicker(killmail) == ticker1:
                                 setup.ships.append(SetupShip.fromFit(fit))
                                 addedCharacters.add(killmail["victim"]["character_id"])
+                                fits.append(fit)
 
                         # Add ships which didn't die
                         for killmail, fit in fight[1]:
@@ -239,6 +241,17 @@ class ImportFromZKillboardThread(threading.Thread):
                                     if (attackerId not in addedCharacters) and self.charTicker(attacker) == ticker1:
                                         setup.ships.append(SetupShip(attacker["ship_type_id"]))
                                         addedCharacters.add(attackerId)
+
+                        # Project all fits onto each other
+                        # TODO: Only project logistics and command ships onto everyone
+                        # import eos.db.saveddata
+                        # for fit1 in fits:
+                        #     for fit2 in fits:
+                        #         if fit1 != fit2:
+                        #             fit1.projectedFitDict[fit2.ID] = fit2
+                        #             eos.db.saveddata_session.flush()
+                        #             eos.db.saveddata_session.refresh(fit2)
+                        # eos.db.commit()
 
                         StoredSetups.addSetup(setup)
 

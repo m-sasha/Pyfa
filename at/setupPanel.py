@@ -146,6 +146,9 @@ class SetupPanel(Panel):
         ship = eos.db.getItem(setupShip.shipId)
         fitId = setupShip.fitId
         fit = sFit.getFit(setupShip.fitId, basic=False) if fitId is not None else None
+        # TODO: Add a "Recompute Projected Fits" button, because this takes a long time
+        # if fit is not None:
+        #     sFit.recalc(fit)
 
         grid.SetCellSize(row, _SHIP_COL, 1, 1)  # Fix what may have been set by _insertAddShipRow
         grid.SetCellValue(row, _SHIP_COL , ship.name)
